@@ -62,3 +62,18 @@ module "JenkinsServer" {
 
 }
 
+module "AnsibleServer" {
+  source = "./modules/vm"
+
+  vmid          = 305
+  name          = "AnsibleServer"
+  target_node   = "pve1"
+  cpu_cores     = 2
+  memory        = 4096
+  template_name = var.template_name
+  vm_username   = var.vm_username
+  ip_address    = "192.168.0.84"
+  gateway       = var.gateway
+  disk_size     = var.disk_size
+
+}
