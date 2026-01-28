@@ -20,5 +20,7 @@
 - pveum aclmod / -user terraform-provider@pve -role TerraformUser                                       - Добавляем роль к созданному пользователю. Pveum aclmod – команда для управления правами доступа.
 - pveum user token add terraform-provider@pve mytoken                                                   - Генерируем токен для подключения по API. Чтобы можно было разворачивать VM из main.tf
 
+- Готовый скрипт находится в файле create_user_terraform.sh
+
 - Обязательно снимаем галочку Privilege Separation, чтобы роли не пересекались между собой. Из-за этого, в новых версиях Proxmox могут быть конфликты. Находится она в Datacenter -> Permissions -> API Tokens -> выбираем созданный токен и через Edit Снимаем галочку.
 5. Настройка гипервизора завершена, мы готовы работать с ним через Terraform. 
