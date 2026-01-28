@@ -29,7 +29,7 @@
 - Скачиваем cloud image образ, который уже готов к работе. Что бы не настраивать VM с нуля. Качаем через wget. Складывать всё будет в папку /var/lib/vz/snippets
 - mkdir /var/lib/vz/snippets
 - wget https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
-Далее создаём VM через консоль:
+- Далее создаём VM через консоль:
 - qm create 9000 --name ubuntu-2404-cloudinit-template
 - root@pve1:/var/lib/vz/snippets# qm set 9000   --virtio0 local-lvm:0,import-from=/var/lib/vz/snippets/noble-server-cloudimg-amd64.img   --scsihw virtio-scsi-pci
 Создаём шаблон из созданной VM:
