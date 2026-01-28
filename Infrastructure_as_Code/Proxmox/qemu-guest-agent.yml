@@ -1,0 +1,27 @@
+#cloud-config
+
+#Обновляем репозитории и устанавливаем обновления. Устанаваливаем qemu-guest-agent
+package_update: true
+package_upgrade: true
+packages:
+  - qemu-guest-agent
+
+#Создаём пользователя sysadmin, с правами root и передаём public key для дальнейшего подключения с нашего хоста.
+users:
+  - name: sysadmin
+    groups: [sudo, adm]
+    shell: /bin/bash
+    sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+    lock_passwd: false
+    passwd: "=4096"
+    # Или для SSH ключа:
+    ssh-authorized-keys:
+- ssh-rsa сюда ввести нужный public key без ковычек
+#Запуск команд. Обновляем пакеты на нашем сервере, устанавливаем qemu-guest-agent,
+#запускаем службу qemu-guest-agent, перезапускаем службу ssh
+runcmd:
+  - apt update
+  - apt install -y qemu-guest-agent
+  - systemctl enable --now qemu-guest-agent
+  - sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
+  - systemctl restart ssh
