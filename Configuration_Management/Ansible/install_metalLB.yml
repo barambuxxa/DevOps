@@ -4,7 +4,7 @@
   become: yes
   vars:
     metallb_version: "v0.14.4"
-    ip_range: "192.168.0.215-192.168.0.220"
+    ip_range: "192.168.0.75-192.168.0.77"
 
   tasks:
     - name: Install MetalLB

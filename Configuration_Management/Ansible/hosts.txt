@@ -18,6 +18,12 @@ kubernetes_master
 [jenkinsservers]
 JenkinsServer ansible_host=192.168.0.85
 
+[jenkinsslaves]
+JenkinsServerAgent ansible_host=192.168.0.83
+
+[jenkinsslaves:vars]
+ansible_user=sysadmin
+
 [jenkinsservers:vars]
 ansible_user=sysadmin
 

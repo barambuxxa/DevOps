@@ -1,0 +1,24 @@
+- name: Install Flannel CNI in Kubernetes cluster
+  hosts: kubernetes_master
+  become: yes
+  tasks:
+    - name: Download Flannel manifest
+      get_url:
+        url: https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+        dest: /tmp/kube-flannel.yml
+        mode: 0644
+
+    - name: Apply Flannel CNI
+      command: kubectl apply -f /tmp/kube-flannel.yml
+      environment:
+        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+
+    - name: Wait for Flannel pods to be ready
+      command: kubectl wait --for=condition=ready pod -l app=flannel -n kube-system --timeout=300s
+      environment:
+        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+      register: flannel_ready
+      retries: 5
+      delay: 15
+      until: flannel_ready.rc == 0
+      ignore_errors: yes

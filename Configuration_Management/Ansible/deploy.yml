@@ -3,6 +3,8 @@
 - import_playbook: config_containerd.yml
 - import_playbook: install_k8s.yml
 - import_playbook: init_k8s.yml
+- import_playbook: install_helm_k8s_master.yml
 - import_playbook: install_flannel.yml
 - import_playbook: join_nodes.yml
+- import_playbook: install_ingress.yml
 - import_playbook: install_metalLB.yml

@@ -1,0 +1,3 @@
+- import_playbook: prepare_slave_jenkins_docker.yml
+- import_playbook: prepare_slave_jenkins_helm.yml
+- import_playbook: prepare_slave_jenkins_kubectl.yml
