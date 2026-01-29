@@ -45,4 +45,13 @@ https://mirror.selectel.ru/3rd-party/hashicorp-releases/terraform/
 9. Используя написанный модуль, мы развернём 5 VM на Proxmox для последующей настройки инфраструктуры. В файле main.tf, в корне.
 10. Сделаем красивый вывод для нашего инженера, В корне создаём файл Outputs.tf
 
+11. Приступим к развёртки
+- terraform init
+- terraform plan
+- terraform apply
+
+- Мы должны получить 5 рабочикх VM для последующей настройки:
+Ansible server, k8sMaster, WorkNode1, WorkNode2 и Jenkins server.
+- Приступим к настройке серверов.
+
 
