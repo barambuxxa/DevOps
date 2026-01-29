@@ -1,0 +1,39 @@
+- name: Initialize Kubernetes master node
+  hosts: kubernetes_master  # Отдельная группа для мастер ноды
+  become: yes
+
+  tasks:
+    - name: Initialize Kubernetes cluster                                          #Инициализируем кластер с сетевыми настрйоками. Сетевые адреса выбраны зи-за дефолтных настроек Flunnel
+      command: kubeadm init --pod-network-cidr=10.244.0.0/16 --upload-certs
+      register: kubeadm_init
+      args:
+        creates: /etc/kubernetes/admin.conf
+
+    - name: Create .kube directory for current user                                #Создание директории .kube для пользователя
+      file:
+        path: "{{ ansible_env.HOME }}/.kube"
+        state: directory
+        mode: 0750
+
+    - name: Copy admin config to user's kube config                                #Копирование конфигурационного файла администратора
+      copy:
+        src: /etc/kubernetes/admin.conf
+        dest: "{{ ansible_env.HOME }}/.kube/config"
+        remote_src: yes
+        owner: "{{ ansible_user_id }}"
+        group: "{{ ansible_user_id }}"
+        mode: 0600
+
+    - name: Get full join command with token and hash                             #Создание токена и получение команды для присоединения worker-нод
+      shell: kubeadm token create --print-join-command
+      register: join_command_full
+      environment:
+        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+
+    - name: Save join command to file with safety flag                          #Создание скрпта для присоединения worker node к мастеру. Присваиваем права на скрпит, что бы ноды могли его забрать.
+      copy:
+        dest: /tmp/join-command.sh
+        content: |
+          #!/bin/bash
+          {{ join_command_full.stdout }} --discovery-token-unsafe-skip-ca-verification    #Команда присоединения с дополнительным флагом для пропуска проверки CA
+        mode: 0755

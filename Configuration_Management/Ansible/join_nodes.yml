@@ -1,0 +1,34 @@
+- name: Join worker nodes to Kubernetes cluster
+  hosts: work_node  # Можно сделать отдельную группу для всех worker нод
+  become: yes
+  tasks:
+    - name: Copy join command from master                              #Копирование скрипта с мастер ноды. Копирование из каталога /tmp/join-command.sh
+      slurp:
+        src: /tmp/join-command.sh
+      delegate_to: "{{ groups['kubernetes_master'][0] }}"
+      register: join_script
+
+    - name: Create join script on worker                              #Создание в папке на воркер ноде с названием join-cluster.sh и присваивание прав
+      copy:
+        dest: /tmp/join-cluster.sh
+        content: "{{ join_script.content | b64decode }}"
+        mode: 0755
+
+    - name: Join worker to cluster                                    #Задача выполнения скрипта присоединения к кластеру
+      command: /tmp/join-cluster.sh
+      args:
+        creates: /etc/kubernetes/kubelet.conf                         #Только если нода уже не подключена и не создан файл kubelet.konf
+
+    - name: Pause for 120 seconds to join nodes
+      ansible.builtin.pause:
+        seconds: 120
+#    - name: Wait for node to be ready (from master)                   #Ожидаем когда нода присоединиться к мастеру
+#      command: kubectl wait --for=condition=ready node/{{ inventory_hostname }} --timeout=300s        #Команда kubectl для ожидания перехода ноды в состояние Ready
+#      delegate_to: "{{ groups['kubernetes_master'][0] }}"
+#      environment:
+#        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+#      register: node_ready
+#      until: node_ready.rc == 0
+#      retries: 15
+#      delay: 5
+#      ignore_errors: yes

@@ -1,0 +1,31 @@
+- name: Update apt packages                              #apt-get update
+  ansible.builtin.apt:
+    update_cache: yes
+
+- name: Install base packages                            #Устанавливаем все пакеты которые были прописаны в переменной base_packages, в defaults/main.yml
+  ansible.builtin.apt:
+    name: "{{ base_packages }}"
+    state: present
+
+- name: Set timezone                                    #Устанавливаем timezone которая была прописана в переменной timezone, в defaults/main.yml
+  community.general.timezone:
+    name: "{{ timezone }}"
+
+- name: Ensure UFW is installed and enabled              #Запускаем firewall ufw и запрещаем все входящие подключения
+  community.general.ufw:
+    state: enabled
+    policy: deny
+
+- name: Allow specified ports in UFW                     #Открытие указанных портов ufw.
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"                                  #Номер порта из текущего элемента списка ufw_ports
+    proto: tcp
+  loop: "{{ ufw_ports }}"                                #Цикл для обработки каждого порта из списка ufw_ports
+
+- name: Add additional SSH public keys                   #Добавление дополнительного ssh ключа
+  ansible.posix.authorized_key:
+    user: "{{ ansible_user }}"                           # Пользователь, для которого добавляются ключи (текущий пользователь Ansible)
+    state: present
+    key: "{{ item }}"
+  loop: "{{ additional_ssh_keys }}"

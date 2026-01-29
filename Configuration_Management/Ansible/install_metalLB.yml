@@ -1,0 +1,60 @@
+---
+- name: Install and configure MetalLB
+  hosts: kubernetes_master
+  become: yes
+  vars:
+    metallb_version: "v0.14.4"
+    ip_range: "192.168.0.215-192.168.0.220"
+
+  tasks:
+    - name: Install MetalLB
+      command:
+        cmd: kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/{{ metallb_version }}/config/manifests/metallb-native.yaml
+      register: install_metallb
+
+    - name: Wait for MetalLB to be ready
+      command:
+        cmd: kubectl wait --namespace metallb-system --for=condition=ready pod -l app=metallb --timeout=300s
+      register: wait_metallb
+      when: install_metallb.rc == 0
+
+    - name: Create MetalLB IP address pool configuration
+      shell: |
+        kubectl apply -f - <<EOF
+        apiVersion: metallb.io/v1beta1
+        kind: IPAddressPool
+        metadata:
+          name: first-pool
+          namespace: metallb-system
+        spec:
+          addresses:
+          - {{ ip_range }}
+        EOF
+      args:
+        executable: /bin/bash
+      register: create_pool
+      when: wait_metallb.rc == 0
+
+    - name: Create L2 advertisement
+      shell: |
+        kubectl apply -f - <<EOF
+        apiVersion: metallb.io/v1beta1
+        kind: L2Advertisement
+        metadata:
+          name: l2-advertisement
+          namespace: metallb-system
+        EOF
+      args:
+        executable: /bin/bash
+      register: create_advertisement
+      when: create_pool.rc == 0
+
+    - name: Verify MetalLB installation
+      command: kubectl get all -n metallb-system
+      register: metallb_status
+      changed_when: false
+
+    - name: Display MetalLB status
+      debug:
+        msg: "MetalLB successfully installed and configured with IP range {{ ip_range }}"
+      when: create_advertisement.rc == 0

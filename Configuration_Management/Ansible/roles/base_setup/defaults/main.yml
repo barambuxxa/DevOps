@@ -1,0 +1,27 @@
+base_packages:                  #Наименование пакетов для установки
+  - curl
+  - wget
+  - vim
+  - htop
+  - net-tools
+  - tree
+  - jq
+  - git
+  - ufw
+  - apt-transport-https
+  - ca-certificates
+  - gnupg
+  - lsb-release
+
+timezone: "Europe/Moscow"         #Тайм-зона
+
+ufw_ports:                        #Прописанные порты которые будут открыты
+  - 22    # SSH
+  - 6443  # Kubernetes API
+  - 2379  # etcd
+  - 10250 # Kubelet API
+  - 10259 # kube-scheduler
+  - 10257 # kube-controller-manager
+
+additional_ssh_keys:             #Pubkey хоста который тоже хочет подключиться к серверам
+  - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDcQDcvGbjUNMWZRyaooxgDo0/CFAwWyLzq2ISdK8rQXzmyxKO09iM5cE9C+580+4SPQREWeSM7w+ez9pzHRafIB9l7kaWGxym8flOJVMRo0zyanYvyMSaBD5a9vfs35U2aW+qplQ/Ml5p+k6oFWrlKHtSY/NPe0wLXhYtvElqtfdS2vD6jywCJ4YodBI0c1pKZH2ZGhwWYL9F2c7lFRKK0C6dHRmccgRTJrkPNYXTaVP5Ba29cbfeM8BoGdFmk3lxs63+R+5roEqz+EBh3BMlqqMYyGMykswkUzVkCiIliAHo2rejksp5PEX1cQrj8ZYXggsOWip9f8GP8Rwjd7lHykkEeOPYgGQL9Ut6I0B26/j3hCqneog1A3C2cv2iRmJsbjhxs8WgFwCsXxs8kRJK4ghJ7C2NooZTIKiV2tQsuedehW3GOWKLaIP/glt9tyz8/4pzzxr/jRKovR5JrKHTYHu9BClwtZE7jstw6TcwK/RecYLxShkmOwNVGPrsFhuxN8m5hQRGcVGn2WEeRVY9lWB2+7c8xXrL9//j61OzsY/oKEu5eWr9NaKfSeSxMHiTFFRUH1HFJ6DfeiM8C6X6LEVN7ZZGkVqEsO0oKZi1PLJKmm6po2Oi7QxM2GeLHMoAe+czjWtIH3l33inyG7Mn8kQ5YP2yOGVE8aMG8OdfkNQ== grandauto\andrey.gurenich@gurenich_IT"

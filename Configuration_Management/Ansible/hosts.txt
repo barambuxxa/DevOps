@@ -1,0 +1,27 @@
+[work_node]
+workNode1 ansible_host=192.168.0.87
+workNode2 ansible_host=192.168.0.86
+
+[work_node:vars]
+ansible_user=sysadmin
+
+[kubernetes_master]
+K8sMaster ansible_host=192.168.0.88
+
+[kubernetes_master:vars]
+ansible_user=sysadmin
+
+[cluster_k8s:children]
+work_node
+kubernetes_master
+
+[jenkinsservers]
+JenkinsServer ansible_host=192.168.0.85
+
+[jenkinsservers:vars]
+ansible_user=sysadmin
+
+[all_hosts:children]
+work_node
+kubernetes_master
+jenkinsservers

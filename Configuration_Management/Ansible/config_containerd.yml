@@ -1,0 +1,29 @@
+- name: Configure containerd for Kubernetes                                                                      #Настрйока containerd
+  hosts: cluster_k8s
+  become: yes
+  tasks:
+    - name: Create containerd config directory                                                                   #создания директории для конфигурации containerd
+      file:
+        path: /etc/containerd
+        state: directory
+        mode: 0755
+
+    - name: Generate default containerd config                                                                    #генерации конфигурации containerd по умолчанию
+      command: containerd config default
+      register: containerd_config
+
+    - name: Pause for 5 second
+      ansible.builtin.pause:
+        seconds: 5
+
+    - name: Write containerd config with SystemdCgroup enabled                                                    #записи модифицированного конфигурационного файла
+      copy:
+        dest: /etc/containerd/config.toml
+        content: |
+          {{ containerd_config.stdout | regex_replace('SystemdCgroup = false', 'SystemdCgroup = true') }}
+
+    - name: Restart containerd                                                                                    #Перезапуск службы
+      systemd:
+        name: containerd
+        state: restarted
+        enabled: yes

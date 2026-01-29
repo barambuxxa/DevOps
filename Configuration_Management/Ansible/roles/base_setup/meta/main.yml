@@ -1,0 +1,15 @@
+---
+galaxy_info:
+  author: Andrey Gurenich
+  description: Base server setup role
+  company: Nope
+  license: MIT
+  min_ansible_version: 2.9
+  platforms:
+    - name: Ubuntu
+      versions:
+        - all
+  galaxy_tags:
+    - system
+    - setup
+    - base
