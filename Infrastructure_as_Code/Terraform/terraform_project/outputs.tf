@@ -35,6 +35,13 @@ output "vm_detalis" {
       ip   = "192.168.0.83"
       node = module.JenkinsAgent.target_node
     }
+
+    JenkinsServer = {
+      id   = module.JenkinsServer.vm_id
+      name = module.JenkinsServer.VM_name
+      ip   = "192.168.0.84"
+      node = module.JenkinsServer.target_node
+    }
   }
 }
 
