@@ -1,0 +1,54 @@
+---
+- name: Install Kubernetes binaries using shell commands
+  hosts: cluster_k8s, jenkinsslaves
+  become: yes
+  vars:
+    K8S_VERSION: "1.34.1"
+    ARCH: "amd64"
+
+  tasks:
+    - name: Create directory and download Kubernetes binaries
+      ansible.builtin.shell:
+        cmd: |
+          set -e
+          mkdir -p /tmp/k8s-install && cd /tmp/k8s-install
+
+          # Скачать бинарные файлы
+          wget -q --show-progress --progress=bar:force \
+            https://dl.k8s.io/release/v{{ K8S_VERSION }}/bin/linux/{{ ARCH }}/kubeadm \
+            https://dl.k8s.io/release/v{{ K8S_VERSION }}/bin/linux/{{ ARCH }}/kubelet \
+            https://dl.k8s.io/release/v{{ K8S_VERSION }}/bin/linux/{{ ARCH }}/kubectl
+
+          # Скачать контрольные суммы
+          wget -q --show-progress --progress=bar:force \
+            https://dl.k8s.io/release/v{{ K8S_VERSION }}/bin/linux/{{ ARCH }}/kubeadm.sha256 \
+            https://dl.k8s.io/release/v{{ K8S_VERSION }}/bin/linux/{{ ARCH }}/kubelet.sha256 \
+            https://dl.k8s.io/release/v{{ K8S_VERSION }}/bin/linux/{{ ARCH }}/kubectl.sha256
+
+          # Проверить хеши
+          echo "$(cat kubeadm.sha256) kubeadm" | sha256sum --check
+          echo "$(cat kubelet.sha256) kubelet" | sha256sum --check
+          echo "$(cat kubectl.sha256) kubectl" | sha256sum --check
+
+          # Установить бинарные файлы
+          sudo install -o root -g root -m 0755 kubeadm /usr/local/bin/kubeadm
+          sudo install -o root -g root -m 0755 kubelet /usr/local/bin/kubelet
+          sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+          # Проверить установку
+          kubeadm version
+          kubectl version --client
+          kubelet --version
+
+          #Ставим Китайский репозиторий, откуда буду устанавливаться pods 
+          kubeadm config images pull --image-repository registry.cn-hangzhou.aliyuncs.com/google_containers
+        executable: /bin/bash
+      args:
+        chdir: /tmp
+      register: install_result
+      changed_when: install_result.rc == 0
+
+    - name: Show installation result
+      debug:
+        msg: "Kubernetes {{ K8S_VERSION }} installed successfully"
+      when: install_result.rc == 0

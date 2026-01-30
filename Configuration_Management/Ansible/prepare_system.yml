@@ -1,5 +1,5 @@
 - name: Prepare system for Kubernetes
-  hosts: cluster_k8s                                #Будут использованы хосты из группы cluster_k8s
+  hosts: cluster_k8s, jenkinsslaves                                #Будут использованы хосты из группы cluster_k8s
   become: yes
   tasks:
     - name: Load kernel modules                      #Загрузка модулей ядра через конфигурационный файл

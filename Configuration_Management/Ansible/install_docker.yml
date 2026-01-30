@@ -1,7 +1,7 @@
 ---
 
 - name: Install docker on hosts                                                              #Устанавливаем докер на хосты
-  hosts: cluster_k8s
+  hosts: cluster_k8s, jenkinsslaves
   become: yes
 
   tasks:

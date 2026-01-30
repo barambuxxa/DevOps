@@ -1,5 +1,5 @@
 - name: Configure containerd for Kubernetes                                                                      #Настрйока containerd
-  hosts: cluster_k8s
+  hosts: cluster_k8s, jenkinsslaves
   become: yes
   tasks:
     - name: Create containerd config directory                                                                   #создания директории для конфигурации containerd

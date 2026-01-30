@@ -1,0 +1,133 @@
+---
+- name: Настройка kubelet как systemd сервис
+  hosts: cluster_k8s, jenkinsslaves
+  become: yes
+  tasks:
+    - name: create kubelet systemd                              #Создать основной systemd unit файл для kubelet
+      copy:
+        dest: /etc/systemd/system/kubelet.service
+        content: |
+          [Unit]
+          Description=kubelet: The Kubernetes Node Agent
+          Documentation=https://kubernetes.io/docs/
+          Wants=network-online.target
+          After=network-online.target containerd.service
+
+          [Service]
+          ExecStart=/usr/local/bin/kubelet
+          Restart=always
+          StartLimitInterval=0
+          RestartSec=10
+          KillMode=process
+          User=root
+
+          [Install]
+          WantedBy=multi-user.target
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Pause for 5 second
+      ansible.builtin.pause:
+        seconds: 5
+
+    - name: Create directory                             #Создать директорию для конфигураций kubelet
+      file:
+        path: /etc/systemd/system/kubelet.service.d
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Create config file                           #Создать конфигурационный файл 10-kubeadm.conf
+      copy:
+        dest: /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+        content: |
+          [Service]
+          Environment="KUBELET_KUBECONFIG_ARGS=--bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf"
+          Environment="KUBELET_CONFIG_ARGS=--config=/var/lib/kubelet/config.yaml"
+          EnvironmentFile=-/etc/default/kubelet
+          ExecStart=
+          ExecStart=/usr/local/bin/kubelet $KUBELET_KUBECONFIG_ARGS $KUBELET_CONFIG_ARGS $KUBELET_KUBEADM_ARGS $KUBELET_EXTRA_ARGS
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: restart daemon                              #Перезагрузить systemd daemon
+      systemd:
+        daemon_reload: yes
+
+    - name: Pause for 5 second
+      ansible.builtin.pause:
+        seconds: 5
+
+    - name: stop containerd                            #Остановить containerd если запущен
+      systemd:
+        name: containerd
+        state: stopped
+        enabled: yes
+      ignore_errors: yes
+
+    - name: restart kubelet                            #Перезапустить kubelet
+      systemd:
+        name: kubelet
+        state: restarted
+        enabled: yes
+        daemon_reload: yes
+
+    - name: Check status kubelet                     #Проверить статус kubelet
+      command: systemctl status kubelet
+      register: kubelet_status
+      changed_when: false
+      failed_when: false
+
+    - name: Pause for 5 second
+      ansible.builtin.pause:
+        seconds: 5
+
+    - name: Write status kubelete                    #Вывести статус kubelet
+      debug:
+        msg: "{{ kubelet_status.stdout_lines }}"
+
+    - name: Start containerd                        #Запустить containerd
+      systemd:
+        name: containerd
+        state: started
+        enabled: yes
+
+    - name: Check status containerd                 #Проверить статус containerd
+      command: systemctl status containerd
+      register: containerd_status
+      changed_when: false
+      failed_when: false
+
+    - name: Pause for 5 second
+      ansible.builtin.pause:
+        seconds: 5
+
+    - name: Write status                            #Вывести статус containerd
+      debug:
+        msg: "{{ containerd_status.stdout_lines }}"
+
+    - name: check status after restart                            #Убедиться что kubelet работает корректно после запуска containerd
+      systemd:
+        name: kubelet
+        state: restarted
+      when: containerd_status.rc == 0
+
+    - name: Pause for 5 second
+      ansible.builtin.pause:
+        seconds: 5
+
+    - name: check status kubelet and containerd              #Проверить финальный статус обоих сервисов
+      shell: |
+        echo "=== Kubelet Status ==="
+        systemctl is-active kubelet
+        echo "=== Containerd Status ==="
+        systemctl is-active containerd
+      register: final_status
+      changed_when: false
+
+    - name: Вывести финальный статус
+      debug:
+        msg: "{{ final_status.stdout_lines }}"

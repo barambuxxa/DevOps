@@ -1,0 +1,50 @@
+---
+- name: Install Jenkins (exact commands replica)
+  hosts: jenkinsservers
+  become: yes
+
+  tasks:
+    # Шаг 1: Обновление apt
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    # Шаг 2: Установка Java 17 JRE
+    - name: Install OpenJDK 21 JRE
+      apt:
+        name: openjdk-21-jre
+        state: present
+
+    # Шаг 3: Скачивание GPG ключа Jenkins
+    - name: Download Jenkins GPG key
+      get_url:
+        url: https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key
+        dest: /etc/apt/keyrings/jenkins-keyring.asc
+        mode: '0644'
+
+    # Шаг 4: Добавление репозитория Jenkins
+    - name: Add Jenkins repository
+      lineinfile:
+        path: /etc/apt/sources.list.d/jenkins.list
+        line: "deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/"
+        create: yes
+
+    # Шаг 5: Обновление apt
+    - name: Update apt packages                                                              #apt-get update
+      ansible.builtin.apt:
+        update_cache: yes
+
+    # Шаг 6: Установка Jenkins
+    - name: Install Jenkins package
+      apt:
+        name: jenkins
+        state: present
+        force_apt_get: yes
+
+    # Шаг 8: Запуск и включение службы Jenkins
+    - name: Start Jenkins service
+      systemd:
+        name: jenkins
+        state: started
+        enabled: yes

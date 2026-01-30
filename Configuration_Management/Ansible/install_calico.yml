@@ -4,12 +4,12 @@
   tasks:
     - name: Download Flannel manifest
       get_url:
-        url: https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
-        dest: /tmp/kube-flannel.yml
+        url: https://raw.githubusercontent.com/projectcalico/calico/v3.30.0/manifests/calico-vxlan.yaml
+        dest: /tmp/calico-vxlan.yaml
         mode: 0644
 
-    - name: Apply Flannel CNI
-      command: kubectl apply -f /tmp/kube-flannel.yml
+    - name: Apply Calico CNI
+      command: kubectl apply -f /tmp/calico-vxlan.yaml
       environment:
         KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
 

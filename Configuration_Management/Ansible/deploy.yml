@@ -1,10 +1,13 @@
+- import_playbook: base_setup.yml
 - import_playbook: prepare_system.yml
 - import_playbook: install_docker.yml
 - import_playbook: config_containerd.yml
-- import_playbook: install_k8s.yml
+- import_playbook: new_install_k8s.yml
+- import_playbook: config_kubelet.yml
 - import_playbook: init_k8s.yml
 - import_playbook: install_helm_k8s_master.yml
-- import_playbook: install_flannel.yml
+- import_playbook: install_calico.yml
 - import_playbook: join_nodes.yml
-- import_playbook: install_ingress.yml
 - import_playbook: install_metalLB.yml
+- import_playbook: install_jenkins.yml
+- import_playbook: prepare_slave_jenkins_helm.yml
