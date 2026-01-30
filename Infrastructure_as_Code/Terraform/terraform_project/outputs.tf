@@ -28,6 +28,13 @@ output "vm_detalis" {
       ip   = "192.168.0.85"
       node = module.JenkinsServer.target_node
     }
+
+    JenkinsAgent = {
+      id   = module.JenkinsAgent.vm_id
+      name = module.JenkinsAgent.VM_name
+      ip   = "192.168.0.83"
+      node = module.JenkinsAgent.target_node
+    }
   }
 }
 
@@ -38,5 +45,8 @@ output "ssh_connections" {
     workNode1     = "ssh ${var.vm_username}@192.168.0.87"
     workNode2     = "ssh ${var.vm_username}@192.168.0.86"
     JenkinsServer = "ssh ${var.vm_username}@192.168.0.85"
-  }
+    JenkinsAgent  = "ssh ${var.vm_username}@192.168.0.83"
+    AnsibleServer = "ssh ${var.vm_username}@192.168.0.84"  
+
+}
 }

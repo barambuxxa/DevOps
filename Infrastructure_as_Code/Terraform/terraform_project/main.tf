@@ -77,3 +77,19 @@ module "AnsibleServer" {
   disk_size     = var.disk_size
 
 }
+
+module "JenkinsAgent" {
+  source = "./modules/vm"
+
+  vmid          = 306
+  name          = "JenkinsAgent"
+  target_node   = "pve1"
+  cpu_cores     = 2
+  memory        = 4096
+  template_name = var.template_name
+  vm_username   = var.vm_username
+  ip_address    = "192.168.0.83"
+  gateway       = var.gateway
+  disk_size     = var.disk_size
+
+}
