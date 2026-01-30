@@ -50,8 +50,8 @@ https://mirror.selectel.ru/3rd-party/hashicorp-releases/terraform/
 - terraform plan
 - terraform apply
 
-- Мы должны получить 5 рабочикх VM для последующей настройки:
-Ansible server, k8sMaster, WorkNode1, WorkNode2 и Jenkins server.
+- Мы должны получить 6 рабочикх VM для последующей настройки:
+Ansible server, k8sMaster, WorkNode1, WorkNode2, Jenkins server, Jenkins Agent.
 - Приступим к настройке серверов.
 
 
