@@ -37,7 +37,7 @@ ansible-playbook deploy.yml
 У нас следующие задачи:
 - Подготовить 3 хоста для сборки Kubernetes кластера.
 - Развернуть Jenkins сервер.
-- Развернуть Jenkins Agent Node. На нём нам тоже потребуется docker, helm, kubeadm. Kubelet и kubctl. В дальнейшем на нём будет настроен полноценный CI/CD
+- Развернуть Jenkins Agent Node. На нём нам тоже потребуется docker, helm, kubeadm. Kubelet и kubctl. В дальнейшем на нём будет настроен полноценный CI/CD в Kubernetes cluster.
 - Развернуть Kubernetes cluster (1 master and 2 worker)
 - Настроить между нодами сеть (Calico plugin). Осуществляться это будет через VXLAN. Это протокол туннелирования, который создаёт виртуальную Layer 2 сеть поверх Layer 3 инфраструктуры, позволяя подам в разных нодах Kubernetes общаться как будто они в одной локальной сети.
 - Настроить Docker and containderd. Через них будут разворачиваться наши будущее pods.
