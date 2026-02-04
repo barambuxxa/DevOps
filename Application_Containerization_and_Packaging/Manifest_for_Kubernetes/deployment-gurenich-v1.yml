@@ -1,0 +1,38 @@
+#Выбираем версию api для работы с Deployment
+apiVersion: apps/v1
+#Создаём Deployment
+kind: Deployment
+#Вводим методанные. namespace, название прилоения, владелец, окружение 
+metadata:
+  name: my-web-deployment
+  labels:
+    app: my-php-application
+    env: prod
+    owner: GurenichAndrey
+spec:
+#КОличество реплик
+  replicas: 6
+#Cелектор для поиска подов с меткой
+  selector:
+    matchLabels:
+      project: php
+#Шаблон для создания новых подов
+  template:
+    metadata:
+      labels:
+        project: php
+#Спецификация для создания подов
+    spec:
+#Контейнеры в поде
+      containers:
+        - name: php-web
+          image: gumidu/php-app-gurenich:latest
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"

@@ -1,0 +1,13 @@
+#Выбираем api версию для работы с сервисами в kubernetes
+apiVersion: v1
+kind: Service
+metadata:
+  name: php-service
+#Выбираем с какими подами будем работать, настраиваем порты и тип сервиса
+spec:
+  selector:
+    project: php
+  ports:
+  - port: 80
+    targetPort: 80
+  type: LoadBalancer
