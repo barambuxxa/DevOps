@@ -8,6 +8,7 @@
 - metallb manifest (external_ip.yml)
 
 1. Deployment manifest.
+
 Создаём 6 реплик в namespace my-web-deployment. Выбираем из какого образа будем разворачивать, на каком порту и с какими параметрами cpu и memory.
 
 Запускаем его командой:
@@ -16,6 +17,7 @@
 Проверяем поднятые поды:
 - kubectl get pods -o wide
 2. Service manifest
+
 Переходим к созданию сервисов. Они нужны для более удобного подключения ко всем подам и деплоям.
 Поднимаем сервис в режиме LoadBalancer
 
@@ -25,6 +27,7 @@
 Проверяем наш сервис:
 - kubectl get services -o wide
 3. Metallb manifest
+
 Нас осталось вывести External IP для нашего сервиса.
 Устанавливаем MetalLB и выбираем пул адресов, через которые можно выйти.
 
