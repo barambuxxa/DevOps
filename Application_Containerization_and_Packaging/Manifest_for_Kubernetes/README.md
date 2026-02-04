@@ -12,6 +12,7 @@
 
 Запускаем его командой:
 - kubectl apply -f deployment-gurenich-v1.yml
+
 Проверяем поднятые поды:
 - kubectl get pods -o wide
 2. Service manifest
@@ -20,6 +21,7 @@
 
 Запускаем его командой:
 - kubectl apply -f service-gurenich.yml
+
 Проверяем наш сервис:
 - kubectl get services -o wide
 3. Metallb manifest
@@ -28,6 +30,7 @@
 
 Запускаем его командой:
 - kubectl apply -f external_ip.yml
+
 Проверяем, получил ли наш сервис External IP:
 - kubectl get services -o wide
 Теперь мы можем обратиться по выделенному сервису ip адресу и нам вернёт страничку любой из 6 поднятых подов
