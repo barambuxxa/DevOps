@@ -8,23 +8,32 @@
 - metallb manifest (external_ip.yml)
 
 1. Deployment manifest.
+
 Создаём 6 реплик в namespace my-web-deployment. Выбираем из какого образа будем разворачивать, на каком порту и с какими параметрами cpu и memory.
+
 Запускаем его командой:
-kubectl apply -f deployment-gurenich-v1.yml
+- kubectl apply -f deployment-gurenich-v1.yml
+
 Проверяем поднятые поды:
-kubectl get pods -o wide
+- kubectl get pods -o wide
 2. Service manifest
+
 Переходим к созданию сервисов. Они нужны для более удобного подключения ко всем подам и деплоям.
 Поднимаем сервис в режиме LoadBalancer
+
 Запускаем его командой:
-kubectl apply -f service-gurenich.yml
+- kubectl apply -f service-gurenich.yml
+
 Проверяем наш сервис:
-kubectl get services -o wide
+- kubectl get services -o wide
 3. Metallb manifest
+
 Нас осталось вывести External IP для нашего сервиса.
 Устанавливаем MetalLB и выбираем пул адресов, через которые можно выйти.
+
 Запускаем его командой:
-kubectl apply -f external_ip.yml
+- kubectl apply -f external_ip.yml
+
 Проверяем, получил ли наш сервис External IP:
-kubectl get services -o wide
+- kubectl get services -o wide
 Теперь мы можем обратиться по выделенному сервису ip адресу и нам вернёт страничку любой из 6 поднятых подов
