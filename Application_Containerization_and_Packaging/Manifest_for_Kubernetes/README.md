@@ -5,7 +5,6 @@
 Начнём с ручной настройки, через манифесты (не используя Helm). Для этого нам потребуется создать
 - deployment manifest (deployment-gurenich-v1.yml)
 - service manifest (service-gurenich.yml)
-- metallb manifest (external_ip.yml)
 
 1. Deployment manifest.
 
@@ -26,14 +25,9 @@
 
 Проверяем наш сервис:
 - kubectl get services -o wide
-3. Metallb manifest
-
-Нас осталось вывести External IP для нашего сервиса.
-Устанавливаем MetalLB и выбираем пул адресов, через которые можно выйти.
-
-Запускаем его командой:
-- kubectl apply -f external_ip.yml
+3. Ранее мы разворачивали MetalLB и уже имеет пул external_ip
 
 Проверяем, получил ли наш сервис External IP:
 - kubectl get services -o wide
-Теперь мы можем обратиться по выделенному сервису ip адресу и нам вернёт страничку любой из 6 поднятых подов
+- 
+Теперь мы можем обратиться по выделенному сервису ip адресу и нам вернёт страничку любой из 6 поднятых подов, в моём случаи по адресу: http://192.168.0.75/
