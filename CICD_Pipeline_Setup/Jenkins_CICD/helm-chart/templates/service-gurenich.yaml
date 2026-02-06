@@ -1,0 +1,13 @@
+#Выбираем api версию для работы с сервисами в kubernetes
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.service.name }}
+#Выбираем с какими подами будем работать, настраиваем порты и тип сервиса
+spec:
+  selector:
+    project: {{ .Release.Name }}
+  ports:
+  - port: {{ .Values.service.port }}
+    targetPort: {{ .Values.service.targetPort }}
+  type: {{ .Values.service.type }}

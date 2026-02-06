@@ -1,0 +1,22 @@
+#Ту всё что касается создания пода. Образ, количество реплик, значение паямти и cpu
+image:
+  repository: gumidu/php-app-gurenich:latest
+  tag: latest
+  pullPolicy: IfNotPresent
+
+replicaCount: 6
+
+resources:
+  requests:
+    memory: "128Mi"
+    cpu: "100m"
+  limits:
+    memory: "256Mi"
+    cpu: "200m"
+
+#Тут значения service. Порт и тип
+service:
+  name: php-service
+  type: LoadBalancer
+  port: 80
+  targetPort: 80

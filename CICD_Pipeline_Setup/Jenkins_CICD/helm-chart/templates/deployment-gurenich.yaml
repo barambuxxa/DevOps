@@ -1,0 +1,33 @@
+#Выбираем версию api для работы с Deployment
+apiVersion: apps/v1
+#Создаём Deployment
+kind: Deployment
+#Вводим методанные. namespace, название прилоения, владелец, окружение 
+metadata:
+  name: {{ .Release.Name }}-deployment
+  labels:
+    app: {{ .Release.Name }}-application
+    env: prod
+    owner: GurenichAndrey
+spec:
+#КОличество реплик
+  replicas: {{ .Values.replicaCount }}
+#Cелектор для поиска подов с меткой
+  selector:
+    matchLabels:
+      project: {{ .Release.Name }}
+#Шаблон для создания новых подов
+  template:
+    metadata:
+      labels:
+        project: {{ .Release.Name }}
+#Спецификация для создания подов
+    spec:
+#Контейнеры в поде
+      containers:
+        - name: {{ .Release.Name }}-web
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          ports:
+            - containerPort: 80
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
