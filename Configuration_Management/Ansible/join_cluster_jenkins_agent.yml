@@ -1,0 +1,17 @@
+---
+- name: Prepare access Kubernetes for Jenkins Agent
+  hosts: jenkinsslaves
+  become: yes
+  vars:
+    k8s_master_user: "sysadmin"      # Измените на вашего пользователя
+    k8s_master_ip: "192.168.0.88"  # IP вашего k8s мастера
+
+  tasks:
+    - name: Copy kubeconfig with master
+      ansible.builtin.shell: |
+        mkdir -p ~/.kube
+        ssh {{ k8s_master_user }}@{{ k8s_master_ip }} "sudo cat /etc/kubernetes/admin.conf" > ~/.kube/config
+        chmod 600 ~/.kube/config
+        chown $(id -u):$(id -g) ~/.kube/config
+      args:
+        executable: /bin/bash

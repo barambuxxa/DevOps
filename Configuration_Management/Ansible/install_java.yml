@@ -1,0 +1,17 @@
+---
+- name: Install Jenkins (exact commands replica)
+  hosts: jenkinsslaves
+  become: yes
+
+  tasks:
+    # Шаг 1: Обновление apt
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    # Шаг 2: Установка Java 17 JRE
+    - name: Install OpenJDK 21 JRE
+      apt:
+        name: openjdk-21-jre
+        state: present

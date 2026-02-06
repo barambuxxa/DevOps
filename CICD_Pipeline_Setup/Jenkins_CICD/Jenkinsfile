@@ -5,6 +5,7 @@ pipeline {
         DOCKER_REGISTRY = 'gumidu'                      //Наш пользователь
         DOCKER_IMAGE_NAME = 'php-app-gurenich'          //Название нашего приложения на DockerHub
         DOCKER_CREDENTIALS_ID = 'docker-hub-credentials' // ID из настроек Jenkins
+        KUBECONFIG = credentials('kubeconfig-credentials') // Credential kubernetes cluster
         IMAGE_TAG = "${env.BUILD_NUMBER}"  // Версия = номер сборки
     }
 
