@@ -11,9 +11,9 @@ ArgoCD → автоматический деплой из обновлённог
 
 У нас уже развёрнуты 3 VM под кластер с помощью Terraform и сконфигурирован рабочий Kubernetes cluster с помощью Ansible.
 
-k8smaster – 192.168.0.88 (Master Node)
-worknode1 – 192.168.0.87 (Worker Node 1)
-worknode2 – 192.168.0.86 (Worker Node 2)
+- k8smaster – 192.168.0.88 (Master Node)
+- worknode1 – 192.168.0.87 (Worker Node 1)
+- worknode2 – 192.168.0.86 (Worker Node 2)
 
 1. Установка AgroCD в наш кластер
 - Создадим namespace для ArgoCD:
@@ -22,14 +22,13 @@ kubectl create namespace argocd
 
 - Устанавливаем ArgoCD с помощью официального манифеста.
 Разворачиваем pods в ранее созданное пространство из манифеста:
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+- kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
 Проверим наши pods командной kubectl get pods -A
 
 У нас уже настроен LoadBalancer и MetalLB для выдачи externalIP
 При развёртки через манифест наш argocd-server поднимается в ClusterIP. Для того, чтобы получить external IP необходимо поменять тип на LoadBalancer:
-
-kubectl edit svc argocd-server -n argocd
+- kubectl edit svc argocd-server -n argocd
 ищем spec:
 	type: ClusterIP 
 и меняем на LoadBalancer
@@ -37,6 +36,7 @@ kubectl edit svc argocd-server -n argocd
 Логин для входа admin, пароль можно узнать следующей командой:
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
 Логинемся в веб-интерфейс и приступим к настройке:
+
 2. Подключение репозитория.
 
 Нам нужно подключить наш github репозиторий в ArgoCD, чтобы он мог его слушать.
