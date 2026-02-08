@@ -77,7 +77,7 @@ $hostname = gethostname() ?: 'Unknown';
 </head>
 <body>
     <h1>Hello from PHP!</h1>
-    <p>This is a simple test application owner Andrey Gurenich with configured Apache for health app status. Using webhook Jenkins v2</p>
+    <p>This is a simple test application owner Andrey Gurenich with configured Apache for health app status. Using webhook Jenkins v3</p>
 
     <div class="info">
         <h3>Server Information:</h3>
