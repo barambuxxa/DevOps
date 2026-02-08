@@ -80,7 +80,7 @@ stages {
             
                     // 2. Проверяем работоспособность новой версии
                     sh """
-                        kubectl rollout status deployment/${newReleaseName} --namespace default --timeout=300s
+                        kubectl rollout status deployment/${newReleaseName}-deployment --namespace default --timeout=300s
                     """
             
                     // 3. Обновляем основной сервис на новую версию
