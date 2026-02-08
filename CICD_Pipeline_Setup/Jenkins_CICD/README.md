@@ -49,54 +49,61 @@ cat /var/lib/jenkins/secrets/initialAdminPassword
 Создаём или отредактируем файл ~/.ssh/config:
 nano ~/.ssh/config
 Добавим следующее (значения для текущей задачи):
-Host 192.168.0.83
-    HostName 192.168.0.83
-    User sysadmin
-    IdentityFile ~/.ssh/rsa
-    IdentitiesOnly yes
+
+- Host 192.168.0.83
+    - HostName 192.168.0.83
+    - User sysadmin
+    - IdentityFile ~/.ssh/rsa
+    - IdentitiesOnly yes
 
 3.2 Переходим в веб-интерфейс Jenkins и добавляем Node.
+
 Настройки – Nodes – New Node.
 Вписываем название узла JenkinsAgent и выбираем тип «Постоянный агент».
 
 Заполним необходимую информацию:
-Имя: JenkinsAgent
-Описание: JenkinsAgent on Linux.
-Количество процессов-исполнителей: 2
-Удалённая корневая директория: /home/sysadmin/jenkins
-Метки: linux, linux_ubuntu, slave
-Использование: Загружать этот узел настолько, насколько возможно
-Способ запуска: Launch Agent via SSH
-Host: 192.168.0.83
+
+- Имя: JenkinsAgent
+- Описание: JenkinsAgent on Linux.
+- Количество процессов-исполнителей: 2
+- Удалённая корневая директория: /home/sysadmin/jenkins
+- Метки: linux, linux_ubuntu, slave
+- Использование: Загружать этот узел настолько, насколько возможно
+- Способ запуска: Launch Agent via SSH
+- Host: 192.168.0.83
 
 __________________________________________________________
 Credentials (тут будет передоваться наш private key). Жмём Add и выбираем Jenkins (Jenkins Credential Provider).
-Domain: Global credentials (unrestricted)
-Kind: SSH Username with private key
-Scope: Global
-ID: ssh-key-0-83
-Description: ssh-key to 192.168.0.83
-Username: sysadmin
-Private Key: Enter directly и жмём Add. Сюда мы вводим private key Jenkins Server
-Жмём Add
-Credentials: sysadmin (ssh-key to 192.168.0.83)
-Host Key Verification Strategy: Manually trusted key verification Strategy
-Жмём Сохранить
+- Domain: Global credentials (unrestricted)
+- Kind: SSH Username with private key
+- Scope: Global
+- ID: ssh-key-0-83
+- Description: ssh-key to 192.168.0.83
+- Username: sysadmin
+- Private Key: Enter directly и жмём Add. Сюда мы вводим private key Jenkins Server
+- Жмём Add
+- Credentials: sysadmin (ssh-key to 192.168.0.83)
+- Host Key Verification Strategy: Manually trusted key verification Strategy
+- Жмём Сохранить
+- 
 При положительном исходе, мы должны увидеть подключенную Node (Настройки – Nodes). Там мы увидим наш JenkinsAgent и мастер.
+
 4. Подключим нашу Jenkins Node к Kubernetes cluster. Для дальнейшей развёртки нашего pipeline в кластер.
 Скопирую конфиг с нашей Master Node (192.168.0.88):
-sudo cat /etc/kubernetes/admin.conf
+- sudo cat /etc/kubernetes/admin.conf
 
 Переходим на наш JenkinsAgent (192.168.0.83) и создаём директорию:
-mkdir -p ~/.kube
+- mkdir -p ~/.kube
 Копируем в созданный нами файл конфиг с мастер ноды:
-nano ~/.kube/config
+- nano ~/.kube/config
 и выдаём права:
-sudo chown $(id -u):$(id -g) ~/.kube/config
+- sudo chown $(id -u):$(id -g) ~/.kube/config
+
 Запускаем на нашем JenkinsAgent команду:
-kubectl get nodes
+- kubectl get nodes
 
 Мы должны получить список Node в нашем кластере. 
+
 5. Мы закончили подготовительные действия, теперь мы можем приступить к написанию Pipeline. Какую задачу он будет решать:
 - Инженер изменяет наше приложение (index.php) и делает push в наш Git Repository. 
 - GitHub делает Webhook, Jenkins серверу, инициируя запуск pipeline.
@@ -104,7 +111,9 @@ kubectl get nodes
 - Из Dockerfile создаётся Docker Image и пушится в DockerHub.
 - Далее включается Helm и на основе нашего Chart приложение разворачивается в нашем k8s cluster.
 - Идёт замена подов с предыдущей версией приложения на актуальную
+
 5.1 Очень важно, что бы наш репозиторий с приложением был стандартизирован.
+
 Все файлы были написаны в предыдущих модулях
 Pipeline будет разворачиваться из Jenkinsfile в нашем репозитории, будем придерживаться принципа IaC.
 
@@ -114,63 +123,71 @@ Pipeline будет разбит на 5 шагов:
 3. Пуш созданного образа в DockerHub
 4. Деплой нашего приложения в Kubernetes
 5. Проверка деплоя
+
 5.2 Webhook 
 Настроим webhook. Нам надо, что бы любое изменение в нашем репозитории запускало сборку приложения.
 Наш инженер делает изменение в файле index.php. GitHub webhook отправляет запрос Jenkins серверу. При получении этого запроса Jenkins инициирует запуск Pipeline.
-На сайте github заходим в наш рабочий репозиторий – Settings – Webhooks – Add Webhooks
-В поле Payload URL * прописываем наш JenkinsServer. У него должен быть внешний доступ в интернет, для подключения к GitHub.
-Payload URL *: http://мой_ip:11111/github-webhook/
-Content type *: application/json
+- На сайте github заходим в наш рабочий репозиторий – Settings – Webhooks – Add Webhooks
+- В поле Payload URL * прописываем наш JenkinsServer. У него должен быть внешний доступ в интернет, для подключения к GitHub.
+- Payload URL *: http://мой_ip:11111/github-webhook/
+- Content type *: application/json
+
 В том же окне можно проверить статус подключения. Если запрос вернул код 200, то всё отлично. Связь есть.
 
-6. Credential. 
+6. Credential.
+   
 Нам нужны дополнительные credential для сборки нашего Pipeline. 
 Доступ на наш docker hub репозиторий и конфигурацию Kubernetes cluster.
-6.1 Credentials kubeconfig
-Заходим на веб-интерфейс Jenkins и переходим:
-Settings -> Credentials -> System -> Global credentials (unrestricted) ->  -> Add Credentials.
-Kind: Secret file
-Scope: Global
-File: загружаем наш config (на k8sMaster в папке ~/.kube/)
-ID: config (kubeconfig-credentials)
-Description: config (kubeconfig-credentials)
-6.2 Credential docker hub
-Заходим на веб-интерфейс Jenkins и переходим:
-Settings -> Credentials -> System -> Global credentials (unrestricted) ->  -> Add Credentials.
-Kind: Username with password
-Username: myname
-Password: mypassword
-ID: docker-hub-credentials
-Description: docker-hub-credentials
 
-7. Создание Pipeline
+6.1 Credentials kubeconfig
+
+Заходим на веб-интерфейс Jenkins и переходим:
+- Settings -> Credentials -> System -> Global credentials (unrestricted) ->  -> Add Credentials.
+- Kind: Secret file
+- Scope: Global
+- File: загружаем наш config (на k8sMaster в папке ~/.kube/)
+- ID: config (kubeconfig-credentials)
+- Description: config (kubeconfig-credentials)
+- 
+6.2 Credential docker hub
+- Заходим на веб-интерфейс Jenkins и переходим:
+- Settings -> Credentials -> System -> Global credentials (unrestricted) ->  -> Add Credentials.
+- Kind: Username with password
+- Username: myname
+- Password: mypassword
+- ID: docker-hub-credentials
+- Description: docker-hub-credentials
+
+8. Создание Pipeline
+   
 В веб-интерфейсе Jenkins нажимаем Новый Item
 Вводим название AppPHP и выбираем Pipeline. Жмём Ок.
-Описание: MyJenkins pipeline
-Ставим галочку на Удалять устаревшие сборки -> Сколько последних сборок хранить -> 5 штук
-Triggers -> GitHub hook trigger for GITScm polling
-Definition -> Pipeline script from SCM
-SCM: Git
-Repository URL: https://github.com/barambuxxa/DevOps
-Credentials жмём Add и добавляем private key для подключения репозитория
+- Описание: MyJenkins pipeline
+- Ставим галочку на Удалять устаревшие сборки -> Сколько последних сборок хранить -> 5 штук
+- Triggers -> GitHub hook trigger for GITScm polling
+- Definition -> Pipeline script from SCM
+- SCM: Git
+- Repository URL: https://github.com/barambuxxa/DevOps
+- Credentials жмём Add и добавляем private key для подключения репозитория
 __________________________________________________________
-Domain: Global Credentials (unrestricted)
-Kind: SSH Username with private key (тут будем добавлять логин к нашему GitHub и private key для подключения)
-Scope: Global
-ID: key_github_ssh
-Description: key_github_ssh
-Username: barambuxxa
-Private Key: Enter directly
-Вводим private ssh key нашего JenkinsServer. 
-Жмём Add
+- Domain: Global Credentials (unrestricted)
+- Kind: SSH Username with private key (тут будем добавлять логин к нашему GitHub и private key для подключения)
+- Scope: Global
+- ID: key_github_ssh
+- Description: key_github_ssh
+- Username: barambuxxa
+- Private Key: Enter directly
+- Вводим private ssh key нашего JenkinsServer. 
+- Жмём Add
 __________________________________________________________
-Добавляем наш credential barambuxxa (key_github_ssh)
-Branch Specifier (blank for 'any'): main
-Script Path: CICD_Pipeline_Setup/Jenkins_CICD/Jenkinsfile
-Теперь добавим на GitHub public ssh key нашего JenkinsServer:
-Settings -> SSH and GPG keys -> New SSH key
-Title: My_Token_for_jenkins
-Key type: Autentication Key
+- Добавляем наш credential barambuxxa (key_github_ssh)
+- Branch Specifier (blank for 'any'): main
+- Script Path: CICD_Pipeline_Setup/Jenkins_CICD/Jenkinsfile
+- Теперь добавим на GitHub public ssh key нашего JenkinsServer:
+- Settings -> SSH and GPG keys -> New SSH key
+- Title: My_Token_for_jenkins
+- Key type: Autentication Key
+- 
 Вводим ключ и жмём Add. Ключ должен появиться в списках.
 
 8. Запускаем наш Pipeline в Jenkins. У нас должно развернуть 10 подов с нашим приложением. 
