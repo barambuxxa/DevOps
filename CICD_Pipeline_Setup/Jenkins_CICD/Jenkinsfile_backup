@@ -61,47 +61,15 @@ stages {
             steps {
                 script {
                     echo "Деплоим в Kubernetes..."
-            
-                    def newReleaseName = "my-php-app-${BUILD_NUMBER}"
-                    def currentReleaseName = "my-php-app"
-            
-                    // 1. Разворачиваем новую версию с уникальным именем
+                    // Обновляем Helm chart с новой версией образа
                     sh """
-                        helm upgrade --install ${newReleaseName} ./helm-chart \
+                        helm upgrade --install my-php-app-${BUILD_NUMBER} ./helm-chart \
                             --namespace default \
                             --set image.repository=${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME} \
-                            --set image.tag=${IMAGE_TAG} \
-                            --set replicaCount=10 \
-                            --set service.name=php-service-${BUILD_NUMBER} \
-                            --set ingress.enabled=false \
-                            --timeout 5m \
-                            --wait
-                    """
-            
-                    // 2. Проверяем работоспособность новой версии
-                    sh """
-                        kubectl rollout status deployment/${newReleaseName} --namespace default --timeout=300s
-                    """
-            
-                    // 3. Обновляем основной сервис на новую версию
-                    sh """
-                        helm upgrade --install ${currentReleaseName} ./helm-chart \
-                            --namespace default \
-                            --set image.repository=${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME} \
-                            --set image.tag=${IMAGE_TAG} \
                             --set replicaCount=10 \
                             --timeout 5m \
                             --wait
                     """
-            
-                    // 4. Удаляем старый релиз (если он отличается от нового)
-                    if (env.BUILD_NUMBER.toInteger() > 1) {
-                        def oldReleaseName = "my-php-app-${env.BUILD_NUMBER.toInteger() - 1}"
-                        sh """
-                            helm uninstall ${oldReleaseName} --namespace default || true
-                        """
-                    }
-            
                     echo "Деплой завершен!"
                 }
             }
