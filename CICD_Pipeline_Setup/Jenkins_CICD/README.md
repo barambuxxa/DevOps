@@ -21,6 +21,7 @@ cat /var/lib/jenkins/secrets/initialAdminPassword
 Вводим пароль и выбираем уже готовый набор плагинов «Install suggested plugins», потом добавим необходимые. 
 Создаём нашего Admin user.
 После установки наш Jenkins готов к работе!
+
 2. Установим необходимые нам плагины.
 Переходим в Настройки – Plugins – Available Plugins
 Нам нужны:
@@ -30,15 +31,18 @@ cat /var/lib/jenkins/secrets/initialAdminPassword
 - SSH Agent – Он нам потребуется для подключения нашего Jenkins Agent.
 
 Жмём Install и ставим галочку «Перезагрузить Jenkins после установки плагинов»
+
 3. Подключаем Worker Node к нашему мастеру.
 Подключение Node будет осуществляться через SSH. Чтобы не нагружать наш Master agent, подключим worker node которая будет осуществлять сборку.
 Это нужно для распределения нагрузки, изолирование среды и использовать разных инструментов/ОС
 
 3.1 Генерируем pubkey and private key на Jenkins Master:
-ssh-keygen -t rsa -b 4096
-Передаём значения нашего pubkey в файл  ~/.ssh/authorized_keys на Jenkins Node.
-Делаем рестарт службы SSH на Jenkins Node:
-systemctl restart ssh
+
+- ssh-keygen -t rsa -b 4096
+- Передаём значения нашего pubkey в файл  ~/.ssh/authorized_keys на Jenkins Node.
+- Делаем рестарт службы SSH на Jenkins Node:
+- systemctl restart ssh
+- 
 Готово, теперь мы можем подключиться по ssh с Jenkins Master к Jenkins Node.
 *** Если возникнет проблема, то можно прописать жёстко какой ключ использовать к какому хосту. В нашем случаи, это прописывается на Jenkins Server:
 
