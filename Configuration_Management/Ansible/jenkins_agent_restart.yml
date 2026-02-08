@@ -1,0 +1,25 @@
+---
+- name: Настройка Jenkins agent (одной командой)
+  hosts: jenkinsslaves
+  become: yes
+
+  tasks:
+    - name: Выполнить все команды настройки
+      shell: |
+        # Добавить пользователя в группу docker
+        sudo usermod -aG docker sysadmin
+
+        # Перезапустить службы
+        sudo systemctl restart docker
+        sudo systemctl restart jenkins-agent
+
+        # Найти и завершить процесс агента
+        PID=$(ps aux | grep remoting.jar | grep -v grep | awk '{print $2}')
+        if [ -n "$PID" ]; then
+          echo "PID агента: $PID"
+          sudo kill $PID || true
+          sleep 2
+          sudo kill -9 $PID || true
+        fi
+      args:
+        executable: /bin/bash

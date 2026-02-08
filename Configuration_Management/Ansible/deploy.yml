@@ -10,4 +10,6 @@
 - import_playbook: join_nodes.yml
 - import_playbook: install_metalLB.yml
 - import_playbook: install_jenkins.yml
+- import_playbook: install_java.yml
 - import_playbook: prepare_slave_jenkins_helm.yml
+- import_playbook: jenkins_agent_restart.yml
