@@ -56,7 +56,7 @@ Private key будет добавлен в ArgoCD.
 
 Формируем наш ключ на master node:
 - ssh-keygen -t rsa -b 4096
-- 
+
 Теперь добавим на GitHub public ssh key нашего k8smaster:
 
 Settings -> SSH and GPG keys -> New SSH key
