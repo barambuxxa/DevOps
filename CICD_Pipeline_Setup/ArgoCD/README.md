@@ -71,6 +71,7 @@ Settings -> SSH and GPG keys -> New SSH key
 - Name (mandatory for Helm): argocd_repo
 - Project: default
 - Repository URL: git@github.com:barambuxxa/DevOps.git
+- Вводим private key k8smaster
   
 Нажимаем Connect, наш ArgoCD должен подключиться к нашему репозиторию
 
@@ -86,7 +87,7 @@ Settings -> SSH and GPG keys -> New SSH key
 - Path: HelmCharts/MyChart1 (нахождение нашего Chart)
 - DESTINATION/Cluster URL: https://kubernetes.default.svc (в текущей кластер где развёрнут ArgoCD)
 - Namespace: default
-- 
+
 Далее жмём CREATE
 
 4 Проверка
