@@ -183,6 +183,7 @@ __________________________________________________________
 - Добавляем наш credential barambuxxa (key_github_ssh)
 - Branch Specifier (blank for 'any'): main
 - Script Path: CICD_Pipeline_Setup/Jenkins_CICD/Jenkinsfile
+- Жмём Save
 - Теперь добавим на GitHub public ssh key нашего JenkinsServer:
 - Settings -> SSH and GPG keys -> New SSH key
 - Title: My_Token_for_jenkins
