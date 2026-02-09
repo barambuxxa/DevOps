@@ -88,23 +88,7 @@ Credentials (тут будет передоваться наш private key). Ж�
 - 
 При положительном исходе, мы должны увидеть подключенную Node (Настройки – Nodes). Там мы увидим наш JenkinsAgent и мастер.
 
-4. Подключим нашу Jenkins Node к Kubernetes cluster. Для дальнейшей развёртки нашего pipeline в кластер.
-Скопирую конфиг с нашей Master Node (192.168.0.88):
-- sudo cat /etc/kubernetes/admin.conf
-
-Переходим на наш JenkinsAgent (192.168.0.83) и создаём директорию:
-- mkdir -p ~/.kube
-Копируем в созданный нами файл конфиг с мастер ноды:
-- nano ~/.kube/config
-и выдаём права:
-- sudo chown $(id -u):$(id -g) ~/.kube/config
-
-Запускаем на нашем JenkinsAgent команду:
-- kubectl get nodes
-
-Мы должны получить список Node в нашем кластере. 
-
-5. Мы закончили подготовительные действия, теперь мы можем приступить к написанию Pipeline. Какую задачу он будет решать:
+4. Мы закончили подготовительные действия, теперь мы можем приступить к написанию Pipeline. Какую задачу он будет решать:
 - Инженер изменяет наше приложение (index.php) и делает push в наш Git Repository. 
 - GitHub делает Webhook, Jenkins серверу, инициируя запуск pipeline.
 - Идёт скачивание нашего репозитория на JenkinsAgent и он начинает сборку нового dockerfile.
@@ -112,7 +96,7 @@ Credentials (тут будет передоваться наш private key). Ж�
 - Далее включается Helm и на основе нашего Chart приложение разворачивается в нашем k8s cluster.
 - Идёт замена подов с предыдущей версией приложения на актуальную
 
-5.1 Очень важно, что бы наш репозиторий с приложением был стандартизирован.
+4.1 Очень важно, что бы наш репозиторий с приложением был стандартизирован.
 
 Все файлы были написаны в предыдущих модулях
 Pipeline будет разворачиваться из Jenkinsfile в нашем репозитории, будем придерживаться принципа IaC.
@@ -124,7 +108,7 @@ Pipeline будет разбит на 5 шагов:
 4. Деплой нашего приложения в Kubernetes
 5. Проверка деплоя
 
-5.2 Webhook 
+4.2 Webhook 
 Настроим webhook. Нам надо, что бы любое изменение в нашем репозитории запускало сборку приложения.
 Наш инженер делает изменение в файле index.php. GitHub webhook отправляет запрос Jenkins серверу. При получении этого запроса Jenkins инициирует запуск Pipeline.
 - На сайте github заходим в наш рабочий репозиторий – Settings – Webhooks – Add Webhooks
@@ -134,12 +118,12 @@ Pipeline будет разбит на 5 шагов:
 
 В том же окне можно проверить статус подключения. Если запрос вернул код 200, то всё отлично. Связь есть.
 
-6. Credential.
+5. Credential.
    
 Нам нужны дополнительные credential для сборки нашего Pipeline. 
 Доступ на наш docker hub репозиторий и конфигурацию Kubernetes cluster.
 
-6.1 Credentials kubeconfig
+5.1 Credentials kubeconfig
 
 Заходим на веб-интерфейс Jenkins и переходим:
 - Settings -> Credentials -> System -> Global credentials (unrestricted) ->  -> Add Credentials.
@@ -149,7 +133,7 @@ Pipeline будет разбит на 5 шагов:
 - ID: config (kubeconfig-credentials)
 - Description: config (kubeconfig-credentials)
 - 
-6.2 Credential docker hub
+5.2 Credential docker hub
 - Заходим на веб-интерфейс Jenkins и переходим:
 - Settings -> Credentials -> System -> Global credentials (unrestricted) ->  -> Add Credentials.
 - Kind: Username with password
@@ -158,7 +142,7 @@ Pipeline будет разбит на 5 шагов:
 - ID: docker-hub-credentials
 - Description: docker-hub-credentials
 
-8. Создание Pipeline
+6. Создание Pipeline
    
 В веб-интерфейсе Jenkins нажимаем Новый Item
 Вводим название AppPHP и выбираем Pipeline. Жмём Ок.
@@ -191,5 +175,5 @@ __________________________________________________________
 - 
 Вводим ключ и жмём Add. Ключ должен появиться в списках.
 
-8. Запускаем наш Pipeline в Jenkins. У нас должно развернуть 10 подов с нашим приложением. 
+7. Запускаем наш Pipeline в Jenkins. У нас должно развернуть 10 подов с нашим приложением. 
 После изменения в репозитории, Jenkins с помощью webhook будет запускать pipeline.
