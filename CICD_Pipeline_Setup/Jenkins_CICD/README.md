@@ -17,7 +17,7 @@ JenkinsAgent – 192.168.0.83. Установили JDK21, установили 
 
 1. Начнём со входа на наш Jenkins server. В адресной строке браузера вводим http://192.168.0.85:8080
 Получаем информационное сообщение о разблокировке Jenkins. На физическом хосте вводим команду для получения пароля администратора:
-cat /var/lib/jenkins/secrets/initialAdminPassword
+- cat /var/lib/jenkins/secrets/initialAdminPassword
 Вводим пароль и выбираем уже готовый набор плагинов «Install suggested plugins», потом добавим необходимые. 
 Создаём нашего Admin user.
 После установки наш Jenkins готов к работе!
