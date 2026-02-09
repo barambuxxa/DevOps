@@ -41,6 +41,7 @@
 5. Загрузим наш docker image на docker hub (https://hub.docker.com/). У меня уже есть учётная запись и создан репозиторий https://hub.docker.com/repository/docker/gumidu/php-app-gurenich/general
 
 Логинемся с нашего хоста к docker hub и вводим пароль:
+
 docker login -u gumidu
 
 Протегируем наш image на локальной машине:
