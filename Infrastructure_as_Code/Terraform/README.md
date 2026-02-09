@@ -64,9 +64,9 @@ Ansible server, k8sMaster, WorkNode1, WorkNode2, Jenkins server, Jenkins Agent.
 - Переходим в директорию ~/.ssh и копируем туда наш ранее сформированный private key.
 - Сздаём файл конфига:
 - cat > ~/.ssh/config << 'EOF'
-Host *
-    IdentityFile ~/.ssh/rsa-id
-EOF
+- Host *
+    - IdentityFile ~/.ssh/rsa-id
+- EOF
 
 Меняем права на private key и на папку:
 - chmod 600 ~/.ssh/private_key_name
