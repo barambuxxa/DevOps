@@ -12,6 +12,7 @@ base_packages:                  #Наименование пакетов для 
   - ca-certificates
   - gnupg
   - lsb-release
+  - git
 
 timezone: "Europe/Moscow"         #Тайм-зона
 
