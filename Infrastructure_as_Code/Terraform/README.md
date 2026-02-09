@@ -61,7 +61,7 @@ Ansible server, k8sMaster, WorkNode1, WorkNode2, Jenkins server, Jenkins Agent.
 Приступим к настройке серверов. Но сперва нам надо положить наш private ssh key на наш Ansible сервер:
 
 - Подключаемся по ssh к Ansible серверу
-- Переходим в директорию ~/.ssh и копируем туда наш ранее сформированный private key.
+- Переходим в директорию ~/.ssh и копируем туда наш ранее сформированный private key (мой имеет название rsa-id).
 - Сздаём файл конфига:
 - cat > ~/.ssh/config << 'EOF'
 - Host *
