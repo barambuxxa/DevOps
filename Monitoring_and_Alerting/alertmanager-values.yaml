@@ -4,7 +4,7 @@ alertmanager:
     global:
       resolve_timeout: 5m
       telegram_api_url: https://api.telegram.org
-    
+
     route:
       group_by: ['alertname']
       group_wait: 10s
@@ -20,23 +20,23 @@ alertmanager:
           severity: warning
         receiver: telegram-warning
         repeat_interval: 30m
-    
+
     receivers:
     - name: 'telegram'
       telegram_configs:
-      - bot_token: '8226541607:AAHTU69cBQ5hCTpWcSKkVMYbsU%%%%%%'
-        chat_id: -510118%%%%%%
+      - bot_token: 'ваш token_id'
+        chat_id: -ваш_чат_id
         parse_mode: 'HTML'
         message: '{{ range .Alerts }}<b>{{ .Status | toUpper }}</b> - {{ .Labels.alertname }}
 {{- if .Labels.severity }}Severity: {{ .Labels.severity }}{{ end }}
 {{- if .Labels.instance }}Instance: {{ .Labels.instance }}{{ end }}
 {{- if .Annotations.summary }}Summary: {{ .Annotations.summary }}{{ end }}
 {{- end }}'
-    
+
     - name: 'telegram-critical'
       telegram_configs:
-      - bot_token: '8226541607:AAHTU69cBQ5hCTpWcSKkVMYbsUcjc%%%%%%'
-        chat_id: -510118%%%%%%
+      - bot_token: 'ваш token_id'
+        chat_id: -ваш_чат_id
         parse_mode: 'HTML'
         message: '🚨 <b>CRITICAL ALERT</b> 🚨
 {{ range .Alerts }}
@@ -46,11 +46,11 @@ alertmanager:
 <b>Summary:</b> {{ .Annotations.summary }}
 <b>Description:</b> {{ .Annotations.description }}
 {{ end }}'
-    
+
     - name: 'telegram-warning'
       telegram_configs:
-      - bot_token: '8226541607:AAHTU69cBQ5hCTpWcSKkVMYbsUc%%%%%%'
-        chat_id: -51011%%%%%%
+      - bot_token: 'ваш token_id'
+        chat_id: -ваш_чат_id
         parse_mode: 'HTML'
         message: '⚠️ <b>WARNING ALERT</b> ⚠️
 {{ range .Alerts }}
@@ -59,7 +59,7 @@ alertmanager:
 <b>Instance:</b> {{ .Labels.instance }}
 <b>Summary:</b> {{ .Annotations.summary }}
 {{ end }}'
-    
+
     inhibit_rules:
     - source_match:
         severity: 'critical'

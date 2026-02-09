@@ -23,9 +23,9 @@ spec:
       annotations:
         summary: "Пода не готов"
         description: |
-           Пода не готов к работе
+          ⚠️ода не готов к работе
            Пода: {{ $labels.pod }}
-           Namespace: {{ $labels.namespace }}
+          Namespace: {{ $labels.namespace }}
            Состояние: {{ $labels.phase }}
 
           Пода находится в состоянии {{ $labels.phase }} более 5 минут.

@@ -1,31 +1,23 @@
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: test-disk-alert
+  name: 01-infrastructure
   namespace: monitoring
   labels:
     app: kube-prometheus-stack
     release: prometheus-stack
 spec:
   groups:
-  - name: test-alerts
+  - name: disk-alerts
     rules:
     - alert: TestDiskSpace
-      expr: 100 * (1 - (node_filesystem_avail_bytes{mountpoint="/", fstype!="tmpfs"} / node_filesystem_size_bytes{mountpoint="/", fstype!="tmpfs"})) > 50
+      expr: 100 * (1 - (node_filesystem_avail_bytes{mountpoint="/", fstype!="tmpfs"} / node_filesystem_size_bytes{mountpoint="/", fstype!="tmpfs"})) > 10
       for: 1m
       labels:
         severity: critical
       annotations:
         summary: "ТЕСТ: Мало места на диске на ноде {{ $labels.instance }}"
         description: "ТЕСТ: Использовано {{ $value | humanize }}%"
-
-         Прометеус-запрос (PromQL), который определяет условие срабатывания алерта:
-      # 1. node_filesystem_avail_bytes - метрика свободного места на диске в байтах
-      # 2. node_filesystem_size_bytes - метрика общего размера диска в байтах
-      # 3. mountpoint="/" - фильтр: только корневая файловая система
-      # 4. fstype!="tmpfs" - исключаем временные файловые системы
-      # 5. Вычисляем процент использованного пространства: 100 * (1 - (свободно / всего))
-      # 6. > 40 - условие срабатывания: если использовано более 40%
   - name: memory-alerts
     rules:
     # Высокое использование памяти (>50%)
@@ -36,7 +28,7 @@ spec:
           node_memory_MemAvailable_bytes
           /
           node_memory_MemTotal_bytes
-        ) * 100 > 50
+        ) * 100 > 5
       for: 5m
       labels:
         severity: warning
