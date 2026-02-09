@@ -57,6 +57,22 @@ https://mirror.selectel.ru/3rd-party/hashicorp-releases/terraform/
 
 - Мы должны получить 6 рабочикх VM для последующей настройки:
 Ansible server, k8sMaster, WorkNode1, WorkNode2, Jenkins server, Jenkins Agent.
-- Приступим к настройке серверов.
+
+Приступим к настройке серверов. Но сперва нам надо положить наш private ssh key на наш Ansible сервер:
+
+- Подключаемся по ssh к Ansible серверу
+- Переходим в директорию ~/.ssh и копируем туда наш ранее сформированный private key.
+- Сздаём файл конфига:
+- cat > ~/.ssh/config << 'EOF'
+Host *
+    IdentityFile ~/.ssh/rsa-id
+EOF
+
+Меняем права на private key и на папку:
+- chmod 600 ~/.ssh/private_key_name
+- chmod 700 ~/.ssh 
+
+Перезапускаем ssh:
+- sudo systemctl restart ssh
 
 
