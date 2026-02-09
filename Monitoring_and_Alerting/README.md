@@ -281,6 +281,10 @@ EOF
 
 - kubectl apply -f 02-kubernetes.yaml
 
+Проверить поднятые правила можно командой:
+
+- kubectl get prometheusrules -n monitoring
+
 Инициируем проверку алерта. Создадим намеренно под с очень большими ресурсами, который не сможет развернуться в нашем кластере. Со значением cpu =1000:
 cat <<EOF | kubectl apply -f -
 apiVersion: v1
