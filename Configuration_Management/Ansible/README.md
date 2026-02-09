@@ -75,5 +75,7 @@ ansible-playbook deploy.yml
 Установка Jenkins сервера
 - import_playbook: prepare_slave_jenkins_helm.yml
 Установка Helm на Jenkins Agent Node
+- import_playbook: jenkins_agent_restart.yml
+Заведения пользователя в группу docker, перезапуск службы на jenkins Agent.
 
 В результате у нас будет настроен Kubernetes cluster (1 masterNode and 2 workerNode), Jenkins сервер и Jenkins Agent Node не соединённые вместе.
