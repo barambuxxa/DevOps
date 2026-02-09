@@ -77,7 +77,8 @@ Nodes Count
 
 Ready Nodes Count
 
-Создаём метрику с визуализацией типа Stat (простой счётчик). В ней будет запрос: sum(kube_node_status_condition{condition="Ready"})
+Создаём метрику с визуализацией типа Stat (простой счётчик). В ней будет запрос: 
+- sum(kube_node_status_condition{condition="Ready"})
 
 Pods Count
 
@@ -166,26 +167,29 @@ Memory Usage by Namespace MB
 
 Создаём метрику с визуализацией типа Time series (временной график). В ней будет запрос:
 - sum by (namespace) (container_memory_working_set_bytes{container!="", container!="POD"}) / 1024^2
-- 
+
 Restart pods count
 
 Создаём метрику с визуализацией типа Gauge (датчик). В ней будет запрос:
 - sum by (namespace) (increase(kube_pod_container_status_restarts_total[24h]))
-- 
+
 Изменим Thresholds, более 5 перезагрузок для нас будет критично и будет подсвечено красным.
 
 Pods by Status
+
 Создаём метрику с визуализацией типа Stat (простой счётчик). В ней будет запрос:
-sum by (phase) (kube_pod_status_phase)
+- sum by (phase) (kube_pod_status_phase)
+
 3.4 APPLICATIONS (Приложение)
+
 В этом Dashboard будет отслеживаться состояние нашего приложения
 
 Выведем следующие метрики:
 - Сколько задействовано CPU для конкретного пода с приложением (CPU Usage)
 - Сколько оперативной памяти задействовано пода с приложением (Memory Used MB)
-- Сколько пользователей использует данное приложение (рандомное значение) (Active Users)
 
 CPU Usage
+
 Создаём метрику с визуализацией типа Time series (временной график). В ней будет запрос:
 - sum(rate(container_cpu_usage_seconds_total{pod=~"app1-deployment.*"}[5m])) by (pod)
   
@@ -194,11 +198,6 @@ Memory Used MB
 Создаём метрику с визуализацией типа Time series (временной график). В ней будет запрос:
 - sum(container_memory_working_set_bytes{pod=~"app1-deployment.*"}) by (pod) / 1024/1024
 
-Active Users
-
-Создаём метрику с визуализацией типа Time series (временной график). В ней будет запрос:
-- active_users
-  
 Настройка Alertmanager
 
 У нас уже построены Dashboard для определённых метрик. Теперь настроим уведомления в Telegram для отслеживания изменений в нашем кластере. 
@@ -206,9 +205,12 @@ Active Users
 4.1 Создание бота в Telegram
 
 Нам потребуется создать бота, добавить его в группу в которую он будет отправлять уведомления и получить id чата.
-Для этого нам надо написать боту @BotFather в Telegram и создать бота. Выбираем имя K8salertsbotgurenich и жмём создать. После создания мы получим token_id. 
+Для этого нам надо написать боту @BotFather в Telegram и создать бота. Выбираем имя K8salertsbotgurenich и жмём создать. После создания мы получим token_id.
+
 Наш токен ID будет 8226541607:AAHTU69cBQ5hCTpWcSK$$$$$$$$U%%%%%%.
+
 Далее создаём группу в telegram, добавляем туда нашего бота и узнаём chat_id.
+
 Далее в коде данные chat_id и token_id будут скрыты, для безопасности.
 
 4.2 Конфигурация Alertmanager
@@ -218,17 +220,35 @@ Active Users
 
 Secret перезаписывает ВСЮ конфигурацию - нельзя изменить только чат ID, нужно обновлять весь файл
 После изменения secret нужно рестартовать Alertmanager
-Так как был поднят Alertmanager из Prometheus Stack, то Helm Chart автоматически генерирует свой конфиг и перезапишет наш конфиг. Для этого нам надо создать файл с нашим конфигом и обновить Helm values нашим конфигом. 
+Так как был поднят Alertmanager из Prometheus Stack, то Helm Chart автоматически генерирует свой конфиг и перезапишет наш конфиг. Для этого нам надо создать файл с нашим конфигом и обновить Helm values нашим конфигом. Конфиг в репозитории, с названием alertmanager-values.yaml (НУЖНО ЗАМЕНИТЬ ЗНАЧЕНИЯ НА СВОИ chat_id и token_id).
 
 После этого обновляем Helm values и применяем его:
 
-helm upgrade prometheus-stack prometheus-community/kube-prometheus-stack \
-  -n monitoring \
-  -f alertmanager-values.yaml \
-  --reuse-values
+- helm upgrade prometheus-stack prometheus-community/kube-prometheus-stack -n monitoring -f alertmanager-values.yaml --reuse-values
+
 Проверим тестовым запросом:
 
-cat <<EOF | kubectl apply -f - apiVersion: monitoring.coreos.com/v1 kind: PrometheusRule metadata: name: alert-test-2 namespace: monitoring labels: release: prometheus-stack spec: groups: - name: test rules: - alert: TestAlertToTelegram expr: vector(1) for: 0m # сразу labels: severity: warning annotations: summary: "Test Telegram" description: "Testing if Telegram works" EOF
+cat <<EOF | kubectl apply -f -
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: alert-test-2
+  namespace: monitoring
+  labels:
+    release: prometheus-stack
+spec:
+  groups:
+  - name: test
+    rules:
+    - alert: TestAlertToTelegram
+      expr: vector(1)
+      for: 1m  # измените на положительное значение, например 1m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Test Telegram"
+        description: "Testing if Telegram works"
+EOF
 
 При положительном результате мы должны получить уведомление в Telegram
 
@@ -238,18 +258,28 @@ cat <<EOF | kubectl apply -f - apiVersion: monitoring.coreos.com/v1 kind: Promet
 - Свободное дисковое пространство на ноде
 - Статус неподнятой поды
 - Информация о нехватке оперативной памяти в кластере
-Мы разделим уведомления для конкретных целей.
-Файл 01-infrastructure.yaml будет отвечать за состояние нод. В него будут добавлены уведомления по нехватки памяти и свободное пространство на диске.
-Файл 02-kubernetes.yaml отвечать за состояние под. В него будет добавлено уведомление о неподнятой поде.
 
-5.1 Свободное дисковое пространство на ноде
-Создадим yaml файл с именем 01-infrastructure.yaml. Основная его задача будет в уведомлении, что свободное дисковое пространство на ноде достигло менее 40%
+Мы разделим уведомления для конкретных целей.
+- Файл 01-infrastructure.yaml будет отвечать за состояние нод. В него будут добавлены уведомления по нехватки памяти и свободное пространство на диске.
+- Файл 02-kubernetes.yaml отвечать за состояние под. В него будет добавлено уведомление о неподнятой поде.
+
+5.1 Свободное дисковое пространство на ноде и нехватка памяти.
+
+Создадим yaml файл с именем 01-infrastructure.yaml.
+
+Основная его задача будет в уведомлении, что свободное дисковое пространство на ноде достигло менее 40% и информация о том что памяти использовано больше 50%
+
+- kubectl apply -f 01-infrastructure.yaml
+
 5.2 Уведомление о неподнятой поде.
+
 Данное уведомление будет информировать о том, что пода находится в состояние Pending. 
+
 Для уведомлений о подах будет создан отдельный файл 02-kubernetes.yaml
 
 После этого делаем apply
-root@k8sMaster:~# kubectl apply -f 02-kubernetes.yaml
+
+- kubectl apply -f 02-kubernetes.yaml
 
 Инициируем проверку алерта. Создадим намеренно под с очень большими ресурсами, который не сможет развернуться в нашем кластере. Со значением cpu =1000:
 cat <<EOF | kubectl apply -f -
