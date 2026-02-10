@@ -1,6 +1,7 @@
 #Ansible
 
-У нас уже имеется настроенный гипервизор Proxmox и готовый проект в Terraform, который разворачивает нужное нам количество VM с первоначальной настройкой.
+У нас уже имеется настроенный гипервизор Proxmox и готовый проект в Terraform, который разворачивает нужное нам количество VM с первоначальной настройкой. У нас уже передан private ssh key на Ansible сервер и он может начать развёртку playbooks.
+
 Наши цели:
 - Произвести первичную настройку Ansible сервера, для дальнейшей настройки серверов из .yml файлов. Используя метод IaC.
 - Настройка серверов под нужные задачи.
@@ -9,14 +10,13 @@
 1. Первичная настройка Ansible сервера.
 
 Один из самых распространённых способ подключения к хостам является SSH. 
-- Сгенерируем private и public key, для подключения и передадим его на каждый хост. Можно заново пересоздать VM (кроме Ansible сервер) через Terraform с уже переданным public key. 
-*При развёртке VM через Terraform, я передовал public key своего Ansible сервера на VM заранее.
  - Устанавливаем сам Ansible:
 sudo apt-get install ansible-core
 - В файле ansible.cfg прописываем, где искать адреса хостов и автоматически принимаем ssh fingerprint.
 - Создаём hosts.txt файл с нашими хостами. Объединяем в группы и передаём значения.
 - Проверяем доступность командой 
-sysadmin@MyAnsibleServer:~/ansible_project$ ansible all -m ping
+- sysadmin@MyAnsibleServer:~/ansible_project$ ansible all -m ping
+- 
 Если получаем PONG, то связь есть.
 
 2. Приступаем к написанию наших плейбуков.
@@ -78,4 +78,4 @@ ansible-playbook deploy.yml
 - import_playbook: jenkins_agent_restart.yml
 Заведения пользователя в группу docker, перезапуск службы на jenkins Agent.
 
-В результате у нас будет настроен Kubernetes cluster (1 masterNode and 2 workerNode), Jenkins сервер и Jenkins Agent Node не соединённые вместе.
+В результате у нас будет настроен Kubernetes cluster (1 masterNode and 2 workerNode), Jenkins сервер, Jenkins Agent Node (не соединённые вместе) и Ansible server.
