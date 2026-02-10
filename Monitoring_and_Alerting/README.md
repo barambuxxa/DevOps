@@ -1,4 +1,5 @@
 #Monitoring
+
 Нам надо понимать, что происходит снаружи кластера, внутри кластера и что происходит с нашим приложением.
 
 Для этого мы развернём в нашем Kubernetes кластере kube-prometheus-stack, через Helm.
@@ -37,6 +38,7 @@
   --set grafana.adminPassword=admin123 \
   --set alertmanager.enabled=true \
   --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false
+  
 При успешной развёртке мы увидим новые Service Prometheus
 
 2. Архитектура
@@ -55,6 +57,7 @@ Prometheus, Grafana, Node-exporter и Alertmanager будут общаться �
 2. NODES MONITORING (метрики нод)
 3. PODS & WORKLOADS (поды и приложения)
 4. APPLICATIONS (ваше приложение)
+
 
 3. Dashboards
 
@@ -122,6 +125,7 @@ Memory Used (GB)
 - (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / 1024 / 1024 / 1024
 
 Так же поставим легенду в этом графике, по instance
+
 Добавим визуальное изменение, если значение превышает 1.8. В нашем случаи это превышение 1.8ГБ
 Это делается в панели Виртуализации, во вкладке Thresholds
 
@@ -198,7 +202,7 @@ Memory Used MB
 Создаём метрику с визуализацией типа Time series (временной график). В ней будет запрос:
 - sum(container_memory_working_set_bytes{pod=~"app1-deployment.*"}) by (pod) / 1024/1024
 
-Настройка Alertmanager
+4. Настройка Alertmanager
 
 У нас уже построены Dashboard для определённых метрик. Теперь настроим уведомления в Telegram для отслеживания изменений в нашем кластере. 
 
@@ -219,6 +223,7 @@ Memory Used MB
 Поэтому у него уже есть настройки по умолчанию, которые нам надо изменить, чтобы привязать уведомления в Telegram через бот.
 
 Secret перезаписывает ВСЮ конфигурацию - нельзя изменить только чат ID, нужно обновлять весь файл
+
 После изменения secret нужно рестартовать Alertmanager
 Так как был поднят Alertmanager из Prometheus Stack, то Helm Chart автоматически генерирует свой конфиг и перезапишет наш конфиг. Для этого нам надо создать файл с нашим конфигом и обновить Helm values нашим конфигом. Конфиг в репозитории, с названием alertmanager-values.yaml (НУЖНО ЗАМЕНИТЬ ЗНАЧЕНИЯ НА СВОИ chat_id и token_id).
 
@@ -226,35 +231,14 @@ Secret перезаписывает ВСЮ конфигурацию - нельз
 
 - helm upgrade prometheus-stack prometheus-community/kube-prometheus-stack -n monitoring -f alertmanager-values.yaml --reuse-values
 
-Проверим тестовым запросом:
-
-cat <<EOF | kubectl apply -f -
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: alert-test-2
-  namespace: monitoring
-  labels:
-    release: prometheus-stack
-spec:
-  groups:
-  - name: test
-    rules:
-    - alert: TestAlertToTelegram
-      expr: vector(1)
-      for: 1m  # измените на положительное значение, например 1m
-      labels:
-        severity: warning
-      annotations:
-        summary: "Test Telegram"
-        description: "Testing if Telegram works"
-EOF
+Проверим тестовым запросом. Запускаем test_alert.yaml:
+- kubectl apply -f test_alert.yaml
 
 При положительном результате мы должны получить уведомление в Telegram
 
 5. Уведомления в Telegram
 
-Напишем 4 базовых уведомления для нашего кластера:
+Напишем 3 базовых уведомления для нашего кластера:
 - Свободное дисковое пространство на ноде
 - Статус неподнятой поды
 - Информация о нехватке оперативной памяти в кластере
@@ -285,20 +269,9 @@ EOF
 
 - kubectl get prometheusrules -n monitoring
 
-Инициируем проверку алерта. Создадим намеренно под с очень большими ресурсами, который не сможет развернуться в нашем кластере. Со значением cpu =1000:
-cat <<EOF | kubectl apply -f -
-apiVersion: v1
-kind: Pod
-metadata:
-  name: test-pending-pod-$(date +%s)
-  namespace: default
-spec:
-  containers:
-  - name: pending-container
-    image: busybox
-    command: ["sleep", "3600"]
-    resources:
-      requests:
-        memory: "1Ti"  # Заведомо недостижимое значение
-        cpu: "1000"
-EOF
+Инициируем проверку алерта. Создадим намеренно под с очень большими ресурсами, который не сможет развернуться в нашем кластере. Со значением cpu =1000.
+
+Запускаем test_alert.yaml:
+- kubectl apply -f test_alert_2.yaml
+
+После запуска должны посыпаться ошибки в Telegram
