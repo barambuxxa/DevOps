@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: alert-test-2
+  namespace: monitoring
+  labels:
+    release: prometheus-stack
+spec:
+  groups:
+  - name: test
+    rules:
+    - alert: TestAlertToTelegram
+      expr: vector(1)
+      for: 1m  # измените на положительное значение, например 1m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Test Telegram"
+        description: "Testing if Telegram works"

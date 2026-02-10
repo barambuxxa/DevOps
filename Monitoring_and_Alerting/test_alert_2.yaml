@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-pending-pod-$(date +%s)
+  namespace: default
+spec:
+  containers:
+  - name: pending-container
+    image: busybox
+    command: ["sleep", "3600"]
+    resources:
+      requests:
+        memory: "1Ti"  # Заведомо недостижимое значение
+        cpu: "1000"

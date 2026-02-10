@@ -11,7 +11,7 @@ spec:
   - name: disk-alerts
     rules:
     - alert: TestDiskSpace
-      expr: 100 * (1 - (node_filesystem_avail_bytes{mountpoint="/", fstype!="tmpfs"} / node_filesystem_size_bytes{mountpoint="/", fstype!="tmpfs"})) > 10
+      expr: 100 * (1 - (node_filesystem_avail_bytes{mountpoint="/", fstype!="tmpfs"} / node_filesystem_size_bytes{mountpoint="/", fstype!="tmpfs"})) > 40
       for: 1m
       labels:
         severity: critical
@@ -28,7 +28,7 @@ spec:
           node_memory_MemAvailable_bytes
           /
           node_memory_MemTotal_bytes
-        ) * 100 > 5
+        ) * 100 > 50
       for: 5m
       labels:
         severity: warning
