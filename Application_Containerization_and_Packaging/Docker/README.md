@@ -1,4 +1,5 @@
 #Docker
+
 Наши задачи:
 - Написать простое приложение, страничку. Которая будет отдавать простую информацию:
 - Текстовое приветствие
@@ -8,18 +9,18 @@
 - IP адрес контейнера
 - Hostname где запущен контейнер с приложением.
 - Добавим health check статус. Он нам потребуется для дальнейшего отслеживания и визуализации метрик нашего приложения через связку Prometheus + Grafana.
-- Создать Docke rfile, с нашим приложением.
+- Создать Dockerfile, с нашим приложением.
 - Создать Docker image из нашего Docker file
 - Создание Docker контейнера из нашего Docker image.
 - Пуш Docker image в Docker hub.
 
 1. Код страницы с health метриками находится в файле index.php
-2.  Создаём Docker file, в котором пропишем инструкцию для сборки Docker Image.
+2.  Создаём Dockerfile, в котором пропишем инструкцию для сборки Docker Image.
 - Используем определённую версию php
 - Включаем mod_rewrite, чтобы наш Prometheus имел доступ к расположению \health.
 
 - Копируем index.php и .htaccess в нужные директории.
-3. Из написанного Docker file, мы можем создать Docker Image.
+3. Из написанного Dockerfile, мы можем создать Docker Image.
 Воспользуемся командой:
 - docker build -t php-app-gurenich:v1 .
 4. Docker контейнер
@@ -46,6 +47,7 @@ docker login -u gumidu
 
 Протегируем наш image на локальной машине:
 - docker tag php-app-gurenich:v1 gumidu/php-app-gurenich:latest
+  
 И делаем push:
 - docker push gumidu/php-app-gurenich:latest
 
