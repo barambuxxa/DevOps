@@ -18,7 +18,7 @@ JenkinsAgent – 192.168.0.83. Установили JDK21, установили 
 1. Начнём со входа на наш Jenkins server. В адресной строке браузера вводим http://192.168.0.85:8080
 Получаем информационное сообщение о разблокировке Jenkins. На физическом хосте вводим команду для получения пароля администратора:
 - cat /var/lib/jenkins/secrets/initialAdminPassword
-- 
+  
 Вводим пароль и выбираем уже готовый набор плагинов «Install suggested plugins», потом добавим необходимые. 
 Создаём нашего Admin user.
 После установки наш Jenkins готов к работе!
@@ -106,7 +106,7 @@ Credentials (тут будет передоваться наш private key). Ж�
 - File: загружаем наш config (на k8sMaster в папке ~/.kube/)
 - ID: config (kubeconfig-credentials)
 - Description: config (kubeconfig-credentials)
-- 
+  
 4.2 Credential docker hub
 - Заходим на веб-интерфейс Jenkins и переходим:
 - Settings -> Credentials -> System -> Global credentials (unrestricted) ->  -> Add Credentials.
@@ -116,7 +116,7 @@ Credentials (тут будет передоваться наш private key). Ж�
 - ID: docker-hub-credentials
 - Description: docker-hub-credentials
 
-  5. Webhook
+5. Webhook
      
 Настроим webhook. Нам надо, что бы любое изменение в нашем репозитории запускало сборку приложения.
 Наш инженер делает изменение в файле index.php. GitHub webhook отправляет запрос Jenkins серверу. При получении этого запроса Jenkins инициирует запуск Pipeline.
@@ -177,7 +177,7 @@ __________________________________________________________
 - Settings -> SSH and GPG keys -> New SSH key
 - Title: My_Token_for_jenkins
 - Key type: Autentication Key
-- 
+  
 Вводим ключ и жмём Add. Ключ должен появиться в списках.
 
 7. Запускаем наш Pipeline в Jenkins. У нас должно развернуть 10 подов с нашим приложением. 
