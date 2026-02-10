@@ -1,12 +1,14 @@
 #ArgoCD
 
 ArgoCD. Что за зверь и для чего он нужен? Основная его задача "Слушать" репозиторий. Он наблюдает либо за репозиторием или за папкой в репозитории.
-По аналогии с Jenkins мы делаем изменения в gitHub, допустим меняем в манифесте image или количество реплик. ArgoCD видит это и делает изменения в нашем основном кластере. Так что он может видеть изменения в helme и тоже перезапускать deploymentы.
-Главное различие между Jenkins и ArgoCD, в том что ArgoCD разворачивается только в Kubernetes и его основной задачей является деплой именно в Kubernetes cluster.
+По аналогии с Jenkins мы делаем изменения в gitHub, допустим меняем в манифесте image или количество реплик. ArgoCD видит это и делает изменения в нашем основном кластере. Так что он может видеть изменения в Helm и тоже перезапускать deployments.
+Главное различие между Jenkins и ArgoCD, в том, что ArgoCD разворачивается только в Kubernetes и его основной задачей является деплой именно в Kubernetes cluster.
 ArgoCD не включает в себя этапы сборки и тестов. 
 
 Лучше всего использовать оба метода.
+
 Jenkins → сборка образа, тесты, push в registry, обновление Helm chart в Git.
+
 ArgoCD → автоматический деплой из обновлённого Helm chart в Kubernetes.
 
 У нас уже развёрнуты 3 VM под кластер с помощью Terraform и сконфигурирован рабочий Kubernetes cluster с помощью Ansible.
@@ -29,7 +31,7 @@ ArgoCD → автоматический деплой из обновлённог
 
 У нас уже настроен LoadBalancer и MetalLB для выдачи externalIP
 
-При развёртки через манифест наш argocd-server поднимается в ClusterIP. Для того, чтобы получить external IP необходимо поменять тип на LoadBalancer:
+При развёртки через манифест service argocd-server поднимается в ClusterIP. Для того, чтобы получить external IP необходимо поменять тип на LoadBalancer:
 - kubectl edit svc argocd-server -n argocd
 
 ищем spec:
@@ -65,7 +67,7 @@ Settings -> SSH and GPG keys -> New SSH key
 
 Вводим ключ и жмём Add. Ключ должен появиться в списках.
 
-Теперь подключим наш репозиторий, заходиv в ArgoCD -> Settings -> Repositories -> + Connect Repo
+Теперь подключим наш репозиторий, заходим в ArgoCD -> Settings -> Repositories -> + Connect Repo
 
 - Choose your connection method: VIA SSH
 - Name (mandatory for Helm): argocd_repo
@@ -76,7 +78,8 @@ Settings -> SSH and GPG keys -> New SSH key
 Нажимаем Connect, наш ArgoCD должен подключиться к нашему репозиторию
 
 3. Создание Application
-Создадим Application. Нам нужно, чтобы наше приложение собиралось из github репозитория и синхронизировалось с ним. Инженер делает push в проект и argocd его разворачивает в нашем кластере.
+   
+Создадим Application. Нам нужно, чтобы наше приложение собиралось из github репозитории и синхронизировалось с ним. Инженер делает push в проект и argocd его разворачивает в нашем кластере.
 
 - Выбираем Applications -> + New App
 - Application Name: app1
@@ -90,7 +93,7 @@ Settings -> SSH and GPG keys -> New SSH key
 
 Далее жмём CREATE
 
-4 Проверка
+4. Проверка
 
 Проверим наш CD Pipeline. Мы запустили развёртку Deployment и Service, который создал нам 6 подов с веб-приложением.
 
