@@ -16,7 +16,7 @@ sudo apt-get install ansible-core
 - Создаём hosts.txt файл с нашими хостами. Объединяем в группы и передаём значения.
 - Проверяем доступность командой 
 - sysadmin@MyAnsibleServer:~/ansible_project$ ansible all -m ping
-- 
+  
 Если получаем PONG, то связь есть.
 
 2. Приступаем к написанию наших плейбуков.
