@@ -1,0 +1,18 @@
+pipeline {
+    // Обязательно нужно указать agent!
+    agent any
+    
+    environment {
+        AWS_ACCESS_KEY_ID = credentials('yc-access-key-id')
+        AWS_SECRET_ACCESS_KEY = credentials('yc-secret-access-key')
+    }
+    stages {
+        stage('Test Connection') {
+            steps {
+                sh '''
+                    aws s3 --endpoint-url https://storage.yandexcloud.net ls
+                '''
+            }
+        }
+    }
+}
