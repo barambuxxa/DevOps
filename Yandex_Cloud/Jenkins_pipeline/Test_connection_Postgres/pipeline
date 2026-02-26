@@ -1,0 +1,27 @@
+pipeline {
+    agent any
+    
+    environment {
+        POSTGRES_CONNECT = credentials('postgres_connection')
+    }
+    
+    stages {
+        stage('Подключение к PostgreSQL') {
+            steps {
+                script {
+                    sh '''
+                        # Проверка доступности PostgreSQL
+                       eval "$POSTGRES_CONNECT"
+                        
+                        if [ $? -eq 0 ]; then
+                            echo "🎉 Успех! Можно делать бэкапы"
+                        else
+                            echo "💥 Ошибка подключения"
+                            exit 1
+                        fi
+                    '''
+                }
+            }
+        }
+    }
+}
