@@ -1,0 +1,205 @@
+pipeline {
+    agent any
+    
+    triggers {
+        // Запуск каждые 2 часа с рандомизацией минут
+        cron('H */2 * * *')
+    }
+    
+    environment {
+        
+        //Credentials
+        AWS_ACCESS_KEY_ID = credentials('yc-access-key-id')
+        AWS_SECRET_ACCESS_KEY = credentials('yc-secret-access-key')
+        PG_CREDS = credentials('postgres_creds')
+		PG_HOST = credentials('pg_ip')
+		
+		// Данные для подключения к PostgreSQL
+		PG_PORT = '5432'
+		DB_NAME = 'tester'
+		
+		// Yandex Cloud
+		BUCKET_NAME = 'my-bucket-30gb-for-backup-andrey-gurenich'
+		S3_ENDPOINT = 'https://storage.yandexcloud.net'
+		
+		//Временный каталог до создания бекапа
+		BACKUP_DIR = '/tmp/postgres-backups'
+		
+    }
+    
+    stages {
+        stage('Подготовка к бекапу') {
+            steps {
+                script {
+                    sh '''#!/bin/bash +x
+                        #Создаем директорию для временных файлов
+                        mkdir -p ${BACKUP_DIR}
+                        
+                        # Проверяем наличие необходимых утилит
+                        for cmd in psql pg_dump gzip aws; do
+                            if ! command -v $cmd &> /dev/null; then
+                                echo "❌ $cmd не установлен"
+                                exit 1
+                            fi
+                        done
+						
+						# Проверяем доступность PostgreSQL
+                        export PGPASSWORD="${PG_CREDS_PSW}"
+                        if psql -h ${PG_HOST} -p ${PG_PORT} -U ${PG_CREDS_USR} -d ${DB_NAME} -c "SELECT 1;" &> /dev/null; then
+                            echo "✅ PostgreSQL доступен"
+                        else
+                            echo "❌ PostgreSQL недоступен"
+                            exit 1
+                        fi
+                        
+                        echo "✅ Окружение готово"
+                        '''
+                }
+                    
+                }
+        }
+		
+		stage('Делаем бекап базы локально') {
+			steps {
+				script {
+					sh '''#!/bin/bash +x
+						echo "=== Создание бекапа ==="
+					
+						# Генерируем имя файла с меткой времени
+						export TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+						export BACKUP_FILE="${BACKUP_DIR}/${DB_NAME}_${TIMESTAMP}.sql"
+					
+						echo "📁 Файл бекапа: $(basename ${BACKUP_FILE})"
+                        
+						# Создаем дамп базы данных
+						export PGPASSWORD="${PG_CREDS_PSW}"
+                        
+						echo "⏳ Выполняется pg_dump..."
+						if pg_dump -h ${PG_HOST} -p ${PG_PORT} -U ${PG_CREDS_USR} -d ${DB_NAME} > "${BACKUP_FILE}"; then
+							BACKUP_SIZE=$(du -h "${BACKUP_FILE}" | cut -f1)
+							echo "✅ Бекап создан, размер: ${BACKUP_SIZE}"
+						else
+							echo "❌ Ошибка создания бекапа"
+                        exit 1
+						
+						fi
+					'''
+				}
+			}
+		
+		}
+		
+		stage('Архивация бекапа') {
+			steps {
+				script {
+					sh '''#!/bin/bash +x
+						echo "=== Архивация бекапа ==="
+						
+						# Используем файл из предыдущего этапа
+                        # (переменная окружения сохраняется между этапами, если мы её экспортировали)
+                        
+                        # Находим самый свежий .sql файл (на случай, если переменная не сохранилась)
+                        if [ -z "${BACKUP_FILE}" ]; then
+                            BACKUP_FILE=$(ls -t ${BACKUP_DIR}/*.sql | head -1)
+                        fi
+                        
+                        if [ ! -f "${BACKUP_FILE}" ]; then
+                            echo "Файл бекапа не найден"
+                            exit 1
+                        fi
+                        
+                        echo "Архивация: $(basename ${BACKUP_FILE})"
+                        
+                        # Сжимаем файл
+                        ORIGINAL_SIZE=$(du -h "${BACKUP_FILE}" | cut -f1)
+                        echo "Исходный размер: ${ORIGINAL_SIZE}"
+                        
+                        if gzip -9 "${BACKUP_FILE}"; then
+                            ARCHIVED_SIZE=$(du -h "${BACKUP_FILE}.gz" | cut -f1)
+                            echo "Архивация завершена, размер: ${ARCHIVED_SIZE}"
+                            echo "Сжатие: $(echo "scale=2; $(stat -c%s "${BACKUP_FILE}.gz") * 100 / $(stat -c%s "${BACKUP_FILE}")" | bc)% от оригинала"
+                        else
+                            echo "❌ Ошибка архивации"
+                            exit 1
+                        fi
+                    '''
+						
+				}
+			}
+		}
+		
+		stage('4️⃣ Загрузка в Yandex Cloud') {
+            steps {
+                script {
+                    sh '''#!/bin/bash +x
+                        echo "=== Загрузка в Yandex Cloud Object Storage ==="
+                        
+                        # Находим самый свежий .gz файл
+                        BACKUP_GZ=$(ls -t ${BACKUP_DIR}/*.* | head -1)
+                        
+                        if [ ! -f "${BACKUP_GZ}" ]; then
+                            echo "❌ Архив не найден"
+                            exit 1
+                        fi
+                        
+                        echo "📤 Загрузка: $(basename ${BACKUP_GZ})"
+                        echo "🎯 Бакет: ${BUCKET_NAME}"
+                        
+                        # Формируем путь в бакете с датой для удобной организации
+                        YEAR=$(date +%Y)
+                        MONTH=$(date +%m)
+                        DAY=$(date +%d)
+                        S3_PATH="s3://${BUCKET_NAME}/postgresql/${YEAR}/${MONTH}/${DAY}/$(basename ${BACKUP_GZ})"
+                        
+                        echo "📁 Путь в бакете: ${S3_PATH}"
+                        
+                        # Загружаем файл
+                        if aws s3 cp "${BACKUP_GZ}" "${S3_PATH}" \
+                            --endpoint-url ${S3_ENDPOINT} \
+                            --only-show-errors; then
+                            
+                            # Проверяем, что файл загрузился
+                            if aws s3 ls "${S3_PATH}" --endpoint-url ${S3_ENDPOINT} &> /dev/null; then
+                                echo "✅ Файл успешно загружен в бакет"
+                                
+                                # Получаем информацию о загруженном файле
+                                FILE_SIZE=$(aws s3 ls "${S3_PATH}" --endpoint-url ${S3_ENDPOINT} | awk '{print $3}')
+                                echo "📊 Размер в бакете: $(numfmt --to=iec $FILE_SIZE)"
+                            else
+                                echo "❌ Ошибка: файл не найден в бакете после загрузки"
+                                exit 1
+                            fi
+                        else
+                            echo "❌ Ошибка загрузки в бакет"
+                            exit 1
+                        fi
+                    '''
+                }
+            }
+        }
+		
+		stage('5️⃣ Очистка временных файлов') {
+            steps {
+                script {
+                    sh '''#!/bin/bash +x
+                        echo "=== Очистка временных файлов ==="
+                        
+                        # Удаляем все файлы старше 1 дня из временной директории
+                        OLD_FILES=$(find ${BACKUP_DIR} -type f -name "*.sql" -o -name "*.gz" -mtime +1 | wc -l)
+                        
+                        if [ $OLD_FILES -gt 0 ]; then
+                            find ${BACKUP_DIR} -type f -name "*.sql" -o -name "*.gz" -mtime +1 -delete
+                            echo "✅ Удалено старых файлов: ${OLD_FILES}"
+                        else
+                            echo "ℹ️ Старых временных файлов не найдено"
+                        fi
+                        
+                        # Оставляем только текущий бекап (он уже загружен в S3)
+                        echo "📁 Содержимое временной директории:"
+                        ls -lh ${BACKUP_DIR} | tail -n +2
+                    '''
+                }
+            }
+        }
+    }
+}
