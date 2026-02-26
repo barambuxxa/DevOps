@@ -1,0 +1,223 @@
+pipeline {
+    agent any
+    
+    triggers {
+        // Запуск каждые 2 часа с рандомизацией минут
+        cron('H */3 * * *')
+    }
+    
+    environment {
+        
+        //Credentials
+        AWS_ACCESS_KEY_ID = credentials('yc-access-key-id')
+        AWS_SECRET_ACCESS_KEY = credentials('yc-secret-access-key')
+		
+		// Yandex Cloud
+		SOURCE_BUCKET = 'my-bucket-30gb-for-backup-andrey-gurenich'
+		TARGET_BUCKET = 'my-bucket-30gb-for-backup-andrey-gurenich-centralb'
+		S3_ENDPOINT = 'https://storage.yandexcloud.net'
+		TEMP_DIR = '/tmp/s3-sync'
+		
+    }
+    
+    stages {
+        	
+		stage('Делаем бекап базы локально') {
+			steps {
+                script {
+                    sh '''#!/bin/bash +x
+                        echo "=== Подготовка к синхронизации бакетов ==="
+                        
+                        # Создаем временную директорию
+                        mkdir -p ${TEMP_DIR}
+                        echo "✅ Временная директория: ${TEMP_DIR}"
+                        
+                        # Проверяем наличие AWS CLI
+                        if ! command -v aws &> /dev/null; then
+                            echo "❌ AWS CLI не установлен"
+                            exit 1
+                        else
+                            echo "✅ AWS CLI: $(aws --version)"
+                        fi
+                        
+                        # Проверяем доступ к исходному бакету
+                        echo "Проверка доступа к исходному бакету ${SOURCE_BUCKET}..."
+                        if aws s3 ls "s3://${SOURCE_BUCKET}" --endpoint-url ${S3_ENDPOINT} &> /dev/null; then
+                            echo "✅ Доступ к ${SOURCE_BUCKET} есть"
+                        else
+                            echo "❌ Нет доступа к ${SOURCE_BUCKET}"
+                            exit 1
+                        fi
+                        
+                        # Проверяем доступ к целевому бакету
+                        echo "Проверка доступа к целевому бакету ${TARGET_BUCKET}..."
+                        if aws s3 ls "s3://${TARGET_BUCKET}" --endpoint-url ${S3_ENDPOINT} &> /dev/null; then
+                            echo "✅ Доступ к ${TARGET_BUCKET} есть"
+                        else
+                            echo "❌ Нет доступа к ${TARGET_BUCKET}"
+                            exit 1
+                        fi
+                        
+                        # Получаем информацию о бакетах
+                        SOURCE_REGION=$(aws s3api get-bucket-location --bucket ${SOURCE_BUCKET} --endpoint-url ${S3_ENDPOINT} --query 'LocationConstraint' --output text)
+                        TARGET_REGION=$(aws s3api get-bucket-location --bucket ${TARGET_BUCKET} --endpoint-url ${S3_ENDPOINT} --query 'LocationConstraint' --output text)
+                        
+                        echo "📊 Исходный бакет: ${SOURCE_BUCKET} (${SOURCE_REGION:-ru-central1})"
+                        echo "📊 Целевой бакет:  ${TARGET_BUCKET} (${TARGET_REGION:-ru-central1})"
+                    '''
+                }
+            }
+        }
+		
+		stage('2️⃣ Анализ изменений') {
+            steps {
+                script {
+                    sh '''#!/bin/bash +x
+                        echo "=== Анализ изменений между бакетами ==="
+                        
+                        # Создаем временные файлы для списков
+                        SOURCE_LIST="${TEMP_DIR}/source_files.txt"
+                        TARGET_LIST="${TEMP_DIR}/target_files.txt"
+                        DIFF_LIST="${TEMP_DIR}/files_to_copy.txt"
+                        
+                        # Получаем список всех файлов из исходного бакета
+                        echo "Получение списка файлов из ${SOURCE_BUCKET}..."
+                        aws s3 ls --recursive "s3://${SOURCE_BUCKET}/postgresql/" \
+                            --endpoint-url ${S3_ENDPOINT} \
+                            | awk '{print $4}' | sort > ${SOURCE_LIST}
+                        
+                        # Получаем список всех файлов из целевого бакета
+                        echo "Получение списка файлов из ${TARGET_BUCKET}..."
+                        aws s3 ls --recursive "s3://${TARGET_BUCKET}/postgresql/" \
+                            --endpoint-url ${S3_ENDPOINT} \
+                            | awk '{print $4}' | sort > ${TARGET_LIST}
+                        
+                        # Находим файлы, которых нет в целевом бакете
+                        comm -23 ${SOURCE_LIST} ${TARGET_LIST} > ${DIFF_LIST}
+                        
+                        # Считаем количество
+                        SOURCE_COUNT=$(wc -l < ${SOURCE_LIST})
+                        TARGET_COUNT=$(wc -l < ${TARGET_LIST})
+                        DIFF_COUNT=$(wc -l < ${DIFF_LIST})
+                        
+                        echo "📊 Статистика:"
+                        echo "   - Файлов в исходном бакете: ${SOURCE_COUNT}"
+                        echo "   - Файлов в целевом бакете:  ${TARGET_COUNT}"
+                        echo "   - Файлов для копирования:   ${DIFF_COUNT}"
+                        
+                        # Покажем первые 5 файлов для копирования (если есть)
+                        if [ ${DIFF_COUNT} -gt 0 ]; then
+                            echo ""
+                            echo "📋 Файлы для копирования (первые 5):"
+                            head -5 ${DIFF_LIST} | while read file; do
+                                echo "   - ${file}"
+                            done
+                            
+                            # Сохраняем количество для следующего этапа
+                            echo ${DIFF_COUNT} > "${TEMP_DIR}/diff_count.txt"
+                        else
+                            echo "✅ Бакеты синхронизированы, новых файлов нет"
+                        fi
+                    '''
+                }
+            }
+        }
+		
+		
+		stage('3️⃣ Копирование файлов') {
+            when {
+                expression {
+                    // Запускаем только если есть файлы для копирования
+                    sh(script: 'test -s "${TEMP_DIR}/diff_count.txt"', returnStatus: true) == 0
+                }
+            }
+            steps {
+                script {
+                    sh '''#!/bin/bash +x
+                        echo "=== Копирование файлов в ${TARGET_BUCKET} ==="
+                        
+                        DIFF_LIST="${TEMP_DIR}/files_to_copy.txt"
+                        TOTAL_FILES=$(wc -l < ${DIFF_LIST})
+                        CURRENT=0
+                        
+                        echo "🚀 Начинаем копирование ${TOTAL_FILES} файлов..."
+                        echo ""
+                        
+                        # Копируем каждый файл с индикатором прогресса
+                        while read file; do
+                            CURRENT=$((CURRENT + 1))
+                            
+                            # Получаем размер файла
+                            SIZE=$(aws s3 ls "s3://${SOURCE_BUCKET}/${file}" \
+                                --endpoint-url ${S3_ENDPOINT} | awk '{print $3}')
+                            
+                            echo "[${CURRENT}/${TOTAL_FILES}] Копирование: ${file} ($(numfmt --to=iec $SIZE))"
+                            
+                            # Копируем файл
+                            if aws s3 cp "s3://${SOURCE_BUCKET}/${file}" \
+                                      "s3://${TARGET_BUCKET}/${file}" \
+                                      --endpoint-url ${S3_ENDPOINT} \
+                                      --only-show-errors; then
+                                echo "   ✅ Успешно"
+                            else
+                                echo "   ❌ Ошибка копирования"
+                                echo "   ⚠️ Продолжаем со следующим файлом..."
+                            fi
+                        done < ${DIFF_LIST}
+                        
+                        echo ""
+                        echo "✅ Копирование завершено"
+                    '''
+                }
+            }
+        }	
+		
+		stage('4️⃣ Проверка синхронизации') {
+            steps {
+                script {
+                    sh '''#!/bin/bash +x
+                        echo "=== Проверка синхронизации ==="
+                        
+                        # Получаем новые списки
+                        SOURCE_LIST="${TEMP_DIR}/source_files_after.txt"
+                        TARGET_LIST="${TEMP_DIR}/target_files_after.txt"
+                        
+                        aws s3 ls --recursive "s3://${SOURCE_BUCKET}/postgresql/" \
+                            --endpoint-url ${S3_ENDPOINT} \
+                            | awk '{print $4}' | sort > ${SOURCE_LIST}
+                        
+                        aws s3 ls --recursive "s3://${TARGET_BUCKET}/postgresql/" \
+                            --endpoint-url ${S3_ENDPOINT} \
+                            | awk '{print $4}' | sort > ${TARGET_LIST}
+                        
+                        # Проверяем, что все файлы скопировались
+                        SOURCE_COUNT=$(wc -l < ${SOURCE_LIST})
+                        TARGET_COUNT=$(wc -l < ${TARGET_LIST})
+                        
+                        echo "📊 Итоговая статистика:"
+                        echo "   - Файлов в исходном бакете: ${SOURCE_COUNT}"
+                        echo "   - Файлов в целевом бакете:  ${TARGET_COUNT}"
+                        
+                        if [ ${SOURCE_COUNT} -eq ${TARGET_COUNT} ]; then
+                            echo "✅ Полная синхронизация достигнута!"
+                        else
+                            DIFF=$((SOURCE_COUNT - TARGET_COUNT))
+                            echo "⚠️ Несинхронизированных файлов: ${DIFF}"
+                            echo "ℹ️ Следующий запуск скопирует оставшиеся"
+                        fi
+                        
+                        # Покажем общий размер бакетов
+                        SOURCE_SIZE=$(aws s3 ls --summarize --recursive "s3://${SOURCE_BUCKET}/postgresql/" \
+                            --endpoint-url ${S3_ENDPOINT} | grep "Total Size" | awk '{print $3,$4}')
+                        TARGET_SIZE=$(aws s3 ls --summarize --recursive "s3://${TARGET_BUCKET}/postgresql/" \
+                            --endpoint-url ${S3_ENDPOINT} | grep "Total Size" | awk '{print $3,$4}')
+                        
+                        echo "📦 Размер исходного бакета: ${SOURCE_SIZE}"
+                        echo "📦 Размер целевого бакета:  ${TARGET_SIZE}"
+                    '''
+                }
+            }
+        }
+			
+		}
+}
